@@ -1,30 +1,231 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .App {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+}
+
+/* Rippling Header */
+.rippling-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.rippling-logo {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.nav-icon:hover {
+  opacity: 1;
+}
+
+.search-bar {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 8px 16px;
+  color: white;
+  font-size: 14px;
+  width: 300px;
+  outline: none;
+}
+
+.search-bar::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Main App Layout */
+.app-content {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 56px);
 }
 
 .main-content {
   flex: 1;
-  padding: 20px;
+  padding: 0;
   background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .placeholder-content {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 600px;
+  text-align: center;
+  padding: 40px;
 }
 
 .placeholder-content h1 {
-  color: #1a1a1a;
+  color: #343a40;
   margin-bottom: 16px;
+  font-size: 32px;
+  font-weight: 300;
 }
 
 .placeholder-content p {
   color: #6c757d;
   font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Global paycheck card styles */
+.paycheck-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+}
+
+.paycheck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.paycheck-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.paycheck-date {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.gross-pay-section {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.gross-pay-label {
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.gross-pay-amount {
+  font-size: 32px;
+  font-weight: 700;
+  color: #28a745;
+  margin: 0;
+}
+
+.paycheck-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.detail-column {
+  text-align: center;
+}
+
+.detail-label {
+  color: #6c757d;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.detail-amount {
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.paycheck-breakdown {
+  border-top: 1px solid #dee2e6;
+  padding-top: 16px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.breakdown-label {
+  color: #495057;
+}
+
+.breakdown-amount {
+  font-weight: 500;
+}
+
+.breakdown-amount.positive {
+  color: #28a745;
+}
+
+.breakdown-amount.negative {
+  color: #dc3545;
 }

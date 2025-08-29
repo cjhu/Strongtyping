@@ -19,7 +19,11 @@ const ChatRail = () => {
   return (
     <div className="chat-rail">
       <div className="chat-header">
-        <h3>Chat with Rippling</h3>
+        <div className="chat-header-icon">🤖</div>
+        <div className="chat-header-content">
+          <h3>Let's start working</h3>
+          <p>Search, create, delete or make changes across all of Rippling</p>
+        </div>
       </div>
 
       <ChatMessages messages={messages} onSendMessage={handleSendMessage} />

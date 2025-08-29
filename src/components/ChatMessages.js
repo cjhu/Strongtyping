@@ -176,6 +176,64 @@ const ChatMessages = ({ messages, onSendMessage }) => {
   // Generate detailed response for single match
   const generateDetailedResponse = (candidate) => {
     const employee = candidate.data;
+    
+    // If it's a paycheck query, return detailed paycheck card
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.content.toLowerCase().includes('paycheck')) {
+      return `Here's **${employee.name}'s** latest paycheck:
+
+<div class="paycheck-card">
+<div class="paycheck-header">
+<div class="paycheck-title">Paycheck</div>
+<div class="paycheck-date">08/01/2025 - 08/15/2025</div>
+</div>
+
+<div class="gross-pay-section">
+<div class="gross-pay-label">Gross pay</div>
+<div class="gross-pay-amount">$ 5,769.23</div>
+</div>
+
+<div class="paycheck-details">
+<div class="detail-column">
+<div class="detail-label">Gross pay</div>
+<div class="detail-amount">$ 5,769.23</div>
+</div>
+<div class="detail-column">
+<div class="detail-label">Taxes</div>
+<div class="detail-amount">$ 1,442.31</div>
+</div>
+<div class="detail-column">
+<div class="detail-label">Deductions</div>
+<div class="detail-amount">$ 479.30</div>
+</div>
+</div>
+
+<div class="paycheck-breakdown">
+<div class="breakdown-row">
+<span class="breakdown-label">Regular pay</span>
+<span class="breakdown-amount positive">$ 5,769.23</span>
+</div>
+<div class="breakdown-row">
+<span class="breakdown-label">Federal tax</span>
+<span class="breakdown-amount negative">- $865.38</span>
+</div>
+<div class="breakdown-row">
+<span class="breakdown-label">State tax (CA)</span>
+<span class="breakdown-amount negative">- $346.15</span>
+</div>
+<div class="breakdown-row">
+<span class="breakdown-label">Benefits</span>
+<span class="breakdown-amount negative">- $250.00</span>
+</div>
+<div class="breakdown-row">
+<span class="breakdown-label">401(k)</span>
+<span class="breakdown-amount negative">- $346.16</span>
+</div>
+</div>
+</div>`;
+    }
+    
+    // Default employee information response
     return `**${employee.name}** information:\n\n` +
            `• **Department**: ${employee.department}\n` +
            `• **Role**: ${employee.role}\n` +
@@ -258,11 +316,16 @@ const ChatMessages = ({ messages, onSendMessage }) => {
   React.useEffect(() => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage && lastMessage.isUser && isAIQuery(lastMessage.content)) {
-      // Generate AI response after a short delay
+      // Show thinking indicator first
+      setTimeout(() => {
+        onSendMessage('__THINKING__', false);
+      }, 500);
+
+      // Generate AI response after thinking delay
       setTimeout(() => {
         const aiResponse = generateAIResponse(lastMessage.content);
         onSendMessage(aiResponse, false); // AI response is not from user
-      }, 1000); // 1 second delay to simulate processing
+      }, 2500); // 2.5 second total delay to simulate processing
     }
   }, [messages]);
 
@@ -279,9 +342,11 @@ const ChatMessages = ({ messages, onSendMessage }) => {
     <div className="chat-messages">
       {messages.length === 0 ? (
         <div className="chat-empty-state">
-          <p>Start a conversation with Rippling!</p>
-          <p>Use @ to insert employees, departments, or other objects.</p>
-          <p>Ask questions like "What's Max's latest paycheck?" for AI assistance.</p>
+          <div className="empty-icon">💬</div>
+          <h4>Let's start working</h4>
+          <p>Search, create, delete or make changes across all of Rippling. Here's some ideas to get started:</p>
+          <p>• Use <strong>@</strong> to insert employees, departments, or other objects</p>
+          <p>• Ask questions like "What's Max's latest paycheck?"</p>
         </div>
       ) : (
         messages.map(message => {
@@ -289,19 +354,33 @@ const ChatMessages = ({ messages, onSendMessage }) => {
 
           return (
             <div key={message.id} className={`message ${message.isUser ? 'user' : 'assistant'}`}>
-              <div className="message-content">
-                {message.isUser ? (
-                  parseMessageContent(message.content)
-                ) : (
-                  <AIReplyContent
-                    content={message.content}
-                    isAIQuery={isAIQueryMessage}
-                    onCandidateSelect={handleAmbiguitySelection}
-                  />
-                )}
+              <div className="message-avatar">
+                {message.isUser ? 'J' : '🤖'}
               </div>
-              <div className="message-timestamp">
-                {message.timestamp.toLocaleTimeString()}
+              <div className="message-bubble">
+                <div className="message-content">
+                  {message.isUser ? (
+                    parseMessageContent(message.content)
+                  ) : message.content === '__THINKING__' ? (
+                    <div className="thinking-indicator">
+                      <span>Thinking</span>
+                      <div className="thinking-dots">
+                        <div className="thinking-dot"></div>
+                        <div className="thinking-dot"></div>
+                        <div className="thinking-dot"></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <AIReplyContent
+                      content={message.content}
+                      isAIQuery={isAIQueryMessage}
+                      onCandidateSelect={handleAmbiguitySelection}
+                    />
+                  )}
+                </div>
+                <div className="message-timestamp">
+                  {message.timestamp.toLocaleTimeString()}
+                </div>
               </div>
             </div>
           );
@@ -313,6 +392,11 @@ const ChatMessages = ({ messages, onSendMessage }) => {
 
 // Component to render AI replies with interactive options
 const AIReplyContent = ({ content, isAIQuery, onCandidateSelect }) => {
+  // Check if content contains HTML (like paycheck cards)
+  if (content.includes('<div class="paycheck-card">')) {
+    return <div dangerouslySetInnerHTML={{ __html: content }} />;
+  }
+
   // Parse content to identify ambiguity options
   const parseAIContent = (text) => {
     const lines = text.split('\n');
