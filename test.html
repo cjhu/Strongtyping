@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrongTyping Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .results {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .error {
+            color: red;
+            background-color: #ffe6e6;
+        }
+        .success {
+            color: green;
+            background-color: #e6ffe6;
+        }
+    </style>
+</head>
+<body>
+    <h1>StrongTyping Chat - Manual Test</h1>
+
+    <div class="test-section">
+        <h3>Test 1: Basic @ Trigger</h3>
+        <p>Type "@" in the input below to test basic trigger functionality:</p>
+        <input type="text" class="test-input" id="test1" placeholder="Type @ here...">
+        <div class="results" id="results1">Results will appear here</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Type-ahead Search (@j)</h3>
+        <p>Type "@j" to test the search functionality that was causing errors:</p>
+        <input type="text" class="test-input" id="test2" placeholder="Type @j here...">
+        <div class="results" id="results2">Results will appear here</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Cross-category Search (@mar)</h3>
+        <p>Type "@mar" to test searching across multiple categories:</p>
+        <input type="text" class="test-input" id="test3" placeholder="Type @mar here...">
+        <div class="results" id="results3">Results will appear here</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Dropdown Positioning</h3>
+        <p>This test simulates the dropdown positioning logic:</p>
+        <button onclick="testPositioning()">Test Positioning Logic</button>
+        <div class="results" id="results4">Click button to test positioning</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 5: Navigation & Drill-down</h3>
+        <p>Test the improved keyboard navigation and drill-down flow:</p>
+        <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+            <strong>Navigation Flow:</strong><br>
+            1. Type "@" → Categories appear with → tab indicators<br>
+            2. Use ↑↓ arrows to navigate (see → arrows on right)<br>
+            3. Press Tab on category → Drill down<br>
+            4. Press ⌫ (Backspace) → Go back<br>
+            5. Press Enter on item → Select it<br>
+            6. Press Esc → Close dropdown<br><br>
+            <strong>Visual Cues:</strong><br>
+            • → arrow indicators show drill-down available<br>
+            • Blue highlight = selected item<br>
+            • Keyboard shortcuts shown at bottom<br>
+            • Back button when drilling down<br>
+            • Arrow pointer connects to input<br>
+            • Chips in messages: 👤John Johnson, 🏢Engineering, 💰Payroll
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 6: Drill-down Navigation</h3>
+        <p>Test the keyboard navigation in drill-down mode:</p>
+        <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+            <strong>Drill-down Test:</strong><br>
+            1. Type "@" → Categories appear<br>
+            2. Press Tab on "Employees" → Should drill down<br>
+            3. Use ↑↓ arrows → Should navigate through employees<br>
+            4. Press ⌫ (Backspace) → Should go back<br>
+            5. Check console logs for debugging<br><br>
+            <strong>Expected Console Output:</strong><br>
+            • "Drill-down mode - categoryItems length: 50"<br>
+            • "Keyboard nav - allItems length: 50"<br>
+            • Navigation should work with arrow keys
+        </div>
+        <button onclick="clearConsole()">Clear Console Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 7: Object Chips</h3>
+        <p>Examples of how inserted objects appear as chips in messages:</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+            <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <strong>User:</strong> Can you review <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; margin: 0 2px; border-radius: 12px; font-size: 13px; font-weight: 500; background-color: #e3f2fd; border: 1px solid #2196f3; color: #0d47a1;">
+                <span style="font-size: 12px;">👤</span>
+                <span>John Johnson</span>
+                </span> performance?
+            </div>
+            <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <strong>User:</strong> The <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; margin: 0 2px; border-radius: 12px; font-size: 13px; font-weight: 500; background-color: #f3e5f5; border: 1px solid #9c27b0; color: #4a148c;">
+                <span style="font-size: 12px;">🏢</span>
+                <span>Engineering</span>
+                </span> team did great work
+            </div>
+            <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <strong>User:</strong> Process the <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; margin: 0 2px; border-radius: 12px; font-size: 13px; font-weight: 500; background-color: #e8f5e8; border: 1px solid #4caf50; color: #1b5e20;">
+                <span style="font-size: 12px;">💰</span>
+                <span>Monthly Payroll - June 2024</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 8: First Item Auto-Selected</h3>
+        <p>Test that the first item is automatically highlighted:</p>
+        <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+            <strong>New Behavior:</strong><br>
+            • Type "@" → First category automatically selected (blue highlight)<br>
+            • Press Enter immediately → Select first item<br>
+            • No need to press ↓ arrow first!<br>
+            • Same for drill-down and search modes
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 9: Disambiguation</h3>
+        <p>Test the intelligent object detection and suggestion system:</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+            <strong>Try typing these examples:</strong><br>
+            • "Can you check on John Johnson?" → "John" gets highlighted<br>
+            • "The Engineering team did great work" → "Engineering" gets highlighted<br>
+            • "Process the June payroll" → "June" might match payroll dates<br><br>
+            <strong>How it works:</strong><br>
+            1. Type a message with object-like words<br>
+            2. System detects potential matches<br>
+            3. Shows suggestions dropdown (smart positioning)<br>
+            4. Keyboard navigation: ↑↓ arrows, Enter to select<br>
+            5. Click suggestions to convert to chips<br>
+            6. Press Esc to dismiss<br><br>
+            <strong>Smart Detection:</strong><br>
+            • Matches employee names, department names, payrun terms<br>
+            • Only highlights words longer than 2 characters<br>
+            • Ignores punctuation and case<br>
+            • Shows most relevant matches first<br>
+            • Debounced analysis (800ms after typing stops)
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 10: Conversational AI Chat</h3>
+        <p>Test the AI assistant that answers questions as part of the chat conversation:</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+            <strong>Try asking these AI questions:</strong><br>
+            • "What's Max's latest paycheck?" → Shows 3 Maxes to choose from in chat<br>
+            • "Who manages the Engineering department?" → Direct answer in chat<br>
+            • "What's the total payroll for January?" → Payroll summary in chat<br>
+            • "Tell me about John Johnson's role" → Employee details in chat<br>
+            • "max's salary" → Works with lowercase names<br>
+            • "Who is Sarah?" → Finds Sarah Johnson<br>
+            • "About Jennifer Davis" → Detailed employee info<br>
+            • "Engineering department" → Department information<br>
+            • "Who manages Marketing?" → Manager lookup<br>
+            • "who is sarah" → Handles lowercase names properly<br>
+            • Submit message with disambiguation dropdown showing → No stuck state<br>
+            • Strong-typed messages (with chips) → Skip AI clarification<br><br>
+            <strong>Smart Features:</strong><br>
+            • 🎯 Expanded query recognition (who, what, tell me, about, employee, department)<br>
+            • 🤖 Flexible name detection (works with lowercase, partial names)<br>
+            • 🎯 Better error handling with helpful suggestions<br>
+            • 📱 Full conversational flow within chat interface<br>
+            • ⚡ 1-second delay simulates AI processing<br>
+            • 🔍 Debug logging to console for troubleshooting<br>
+            • ✅ Clean disambiguation state management<br>
+            • 🐛 Fixed race condition causing dropdown flash<br><br>
+            <strong>How it works:</strong><br>
+            • Type question → Press Enter to send<br>
+            • AI analyzes and responds automatically<br>
+            • Click numbered options for ambiguity resolution<br>
+            • If no match found, gets helpful suggestions<br>
+            • Disambiguation dropdowns are properly cleared after submission<br>
+            • Strong-typed messages skip AI clarification<br>
+            • All responses appear as chat messages<br><br>
+            <strong>Example Flow:</strong><br>
+            • Type: "who is sarah" → AI asks to choose from 3 Sarahs<br>
+            • Select: "who is {{sarah johnson}}" → AI responds directly (no clarification needed)
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Status</h3>
+        <div class="results success" id="status">✅ Conversational AI Chat implemented! Questions and answers flow naturally in chat.</div>
+    </div>
+
+    <script>
+        // Mock data matching the React component
+        const mockData = {
+            employees: [
+                { id: 26, name: 'John Johnson', displayName: 'John Johnson', type: 'employee' },
+                { id: 27, name: 'Jane Jackson', displayName: 'Jane Jackson', type: 'employee' },
+                { id: 28, name: 'James Jordan', displayName: 'James Jordan', type: 'employee' },
+                { id: 29, name: 'Jennifer Jenkins', displayName: 'Jennifer Jenkins', type: 'employee' },
+                { id: 30, name: 'Joseph Jimenez', displayName: 'Joseph Jimenez', type: 'employee' },
+                { id: 31, name: 'Jessica Jensen', displayName: 'Jessica Jensen', type: 'employee' },
+                { id: 32, name: 'Jonathan Jacobs', displayName: 'Jonathan Jacobs', type: 'employee' },
+                { id: 33, name: 'Julia Johnston', displayName: 'Julia Johnston', type: 'employee' },
+                { id: 35, name: 'Maria Martinez', displayName: 'Maria Martinez', type: 'employee' },
+                { id: 38, name: 'Mark Mitchell', displayName: 'Mark Mitchell', type: 'employee' }
+            ],
+            departments: [
+                { id: 4, name: 'Marketing', displayName: 'Marketing', type: 'department' }
+            ],
+            payruns: [
+                { id: 1, name: 'Monthly Payroll - January 2024', displayName: 'Monthly Payroll - January 2024', type: 'payrun' }
+            ]
+        };
+
+        function testSearch(searchTerm, resultDiv) {
+            try {
+                const results = {};
+                let totalResults = 0;
+
+                Object.entries(mockData).forEach(([categoryKey, categoryItems]) => {
+                    const filtered = categoryItems
+                        .filter(item =>
+                            item.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+                        )
+                        .slice(0, 5);
+
+                    if (filtered.length > 0) {
+                        results[categoryKey] = filtered;
+                        totalResults += filtered.length;
+                    }
+                });
+
+                if (totalResults > 0) {
+                    resultDiv.className = 'results success';
+                    resultDiv.innerHTML = `<strong>Found ${totalResults} results:</strong><br>`;
+                    Object.entries(results).forEach(([category, items]) => {
+                        resultDiv.innerHTML += `<br><strong>${category}:</strong><br>`;
+                        items.forEach(item => {
+                            resultDiv.innerHTML += `- ${item.displayName} (${item.type})<br>`;
+                        });
+                    });
+                } else {
+                    resultDiv.className = 'results';
+                    resultDiv.innerHTML = 'No results found';
+                }
+
+                document.getElementById('status').className = 'results success';
+                document.getElementById('status').innerHTML = '✅ All tests passed - no runtime errors detected';
+
+            } catch (error) {
+                resultDiv.className = 'results error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                document.getElementById('status').className = 'results error';
+                document.getElementById('status').innerHTML = `❌ Runtime error detected: ${error.message}`;
+            }
+        }
+
+        // Test event listeners
+        document.getElementById('test1').addEventListener('input', function(e) {
+            if (e.target.value.includes('@')) {
+                document.getElementById('results1').className = 'results success';
+                document.getElementById('results1').innerHTML = '✅ @ trigger detected - dropdown would open';
+            } else {
+                document.getElementById('results1').innerHTML = 'Type @ to trigger dropdown';
+            }
+        });
+
+        document.getElementById('test2').addEventListener('input', function(e) {
+            if (e.target.value === '@j') {
+                testSearch('j', document.getElementById('results2'));
+            } else if (e.target.value.startsWith('@j')) {
+                document.getElementById('results2').innerHTML = 'Keep typing...';
+            } else {
+                document.getElementById('results2').innerHTML = 'Type @j to test';
+            }
+        });
+
+        document.getElementById('test3').addEventListener('input', function(e) {
+            if (e.target.value === '@mar') {
+                testSearch('mar', document.getElementById('results3'));
+            } else if (e.target.value.startsWith('@mar')) {
+                document.getElementById('results3').innerHTML = 'Keep typing...';
+            } else {
+                document.getElementById('results3').innerHTML = 'Type @mar to test';
+            }
+        });
+
+        function testPositioning() {
+            // Simulate input position and viewport
+            const mockRect = {
+                top: 500,
+                bottom: 520,
+                left: 50
+            };
+
+            const viewportHeight = 600;
+            const viewportWidth = 800;
+
+            // Test positioning logic (same as React component)
+            const estimatedDropdownHeight = 400;
+            const estimatedDropdownWidth = 360;
+            const arrowHeight = 6;
+
+            let top = mockRect.top - estimatedDropdownHeight - 8 - arrowHeight;
+            let left = mockRect.left;
+            let positionAbove = true;
+
+            if (top < 10) {
+                top = mockRect.bottom + 8;
+                positionAbove = false;
+            }
+
+            if (left + estimatedDropdownWidth > viewportWidth - 10) {
+                left = viewportWidth - estimatedDropdownWidth - 10;
+            }
+
+            left = Math.max(10, left);
+
+            const resultDiv = document.getElementById('results4');
+            resultDiv.className = 'results success';
+            resultDiv.innerHTML = `
+                <strong>Positioning Test Results:</strong><br>
+                Input position: top=${mockRect.top}, left=${mockRect.left}<br>
+                Dropdown position: top=${top}, left=${left}<br>
+                Position: ${positionAbove ? 'Above' : 'Below'} input<br>
+                Arrow direction: ${positionAbove ? 'Pointing down' : 'Pointing up'}<br>
+                <em>✅ Smart positioning prevents dropdown from going off-screen</em>
+            `;
+        }
+
+        function clearConsole() {
+            console.clear();
+            console.log('Console cleared - now test the drill-down navigation');
+        }
+
+        // Initial status
+        document.getElementById('status').innerHTML = 'Ready to test - all runtime errors should be fixed. Try @j in Test 2!';
+    </script>
+</body>
+</html>

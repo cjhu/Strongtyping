@@ -1,0 +1,55 @@
+.chat-input-container {
+  padding: 16px 20px;
+  border-top: 1px solid #e1e5e9;
+  background-color: #f8f9fa;
+}
+
+.chat-input-wrapper {
+  position: relative;
+}
+
+.chat-input {
+  width: 100%;
+  min-height: 40px;
+  max-height: 120px;
+  padding: 12px 16px;
+  border: 1px solid #ced4da;
+  border-radius: 20px;
+  font-size: 14px;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.2s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.chat-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.chat-input:empty:before {
+  content: attr(placeholder);
+  color: #6c757d;
+  pointer-events: none;
+}
+
+/* Highlighted words styling */
+.highlighted-word {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 1px 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.highlighted-word:hover {
+  background-color: #ffeaa7;
+  border-color: #ffdf7e;
+}
+
+.highlighted-word:active {
+  background-color: #ffdf7e;
+}
