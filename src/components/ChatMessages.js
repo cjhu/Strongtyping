@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PTORequestComponent from './PTORequestComponent';
 import ThinkingComponent from './ThinkingComponent';
 import DisambiguationDropdownNew from './DisambiguationDropdownNew';
+import EmployeeTooltip from './EmployeeTooltip';
 
 const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -88,6 +89,81 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     return hasQueryKeyword;
   };
 
+  // Check for typos and suggest corrections
+  const checkForTypos = (userMessage) => {
+    const words = userMessage.toLowerCase().split(/\s+/);
+    
+    // Look for potential name typos
+    for (const word of words) {
+      const cleanWord = word.replace(/[?!.,'"`]/g, '');
+      if (cleanWord.length < 3) continue;
+      
+      // Check against employee names
+      for (const employee of EMPLOYEE_DATABASE.employees) {
+        const fullName = employee.name.toLowerCase();
+        const firstName = employee.name.split(' ')[0].toLowerCase();
+        const lastName = employee.name.split(' ')[1]?.toLowerCase() || '';
+        
+        // Check for similar names (simple fuzzy matching)
+        if (isSimilar(cleanWord, firstName) || isSimilar(cleanWord, lastName) || isSimilar(cleanWord, fullName.replace(/\s+/g, ''))) {
+          return `I couldn't find any ${cleanWord} in the system. There are many employees with the first name "Max." Are you referring to {{${employee.name}:employee}}?`;
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  // Simple fuzzy matching function
+  const isSimilar = (input, target) => {
+    if (input === target) return true;
+    if (Math.abs(input.length - target.length) > 3) return false;
+    
+    // Check for common typos and similarities
+    const inputClean = input.toLowerCase();
+    const targetClean = target.toLowerCase();
+    
+    // Check if input contains significant portion of target
+    if (inputClean.includes(targetClean.substring(0, Math.min(4, targetClean.length)))) return true;
+    if (targetClean.includes(inputClean.substring(0, Math.min(4, inputClean.length)))) return true;
+    
+    // Calculate Levenshtein distance for closer matching
+    const distance = levenshteinDistance(inputClean, targetClean);
+    const maxLength = Math.max(inputClean.length, targetClean.length);
+    const similarity = 1 - (distance / maxLength);
+    
+    return similarity > 0.6; // 60% similarity threshold
+  };
+
+  // Calculate Levenshtein distance
+  const levenshteinDistance = (str1, str2) => {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
+  };
+
   // Generate PTO response with balance and date picker
   const generatePTOResponse = () => {
     return JSON.stringify({
@@ -106,6 +182,12 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         lowerMessage.includes('vacation') || lowerMessage.includes('leave') ||
         lowerMessage.includes('i need to take')) {
       return generatePTOResponse();
+    }
+
+    // Check for typos and fuzzy matching first
+    const typoSuggestion = checkForTypos(userMessage);
+    if (typoSuggestion) {
+      return typoSuggestion;
     }
 
     // Find potential matches
@@ -296,8 +378,8 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     setSelectedCandidate(null);
   };
 
-  // Parse message content to render chips
-  const parseMessageContent = (content) => {
+  // Parse message content to render chips and interactive employee names
+  const parseMessageContent = (content, isAIMessage = false) => {
     // Regex to match chip format: {{Name:Type}}
     const chipRegex = /\{\{([^:]+):([^}]+)\}\}/g;
 
@@ -311,17 +393,27 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         parts.push(content.substring(lastIndex, match.index));
       }
 
-      // Add the chip
+      // Add the chip or interactive employee name
       const name = match[1];
       const type = match[2];
-      parts.push(
-        <span key={match.index} className={`object-chip object-chip-${type}`}>
-          <span className="chip-icon">
-            {getChipIcon(type)}
+      
+      if (isAIMessage && type === 'employee') {
+        // For AI messages, render as interactive employee name with dotted underline
+        const employee = EMPLOYEE_DATABASE.employees.find(emp => emp.name === name);
+        parts.push(
+          <EmployeeTooltip key={match.index} employee={employee} name={name} />
+        );
+      } else {
+        // For user messages, render as chip
+        parts.push(
+          <span key={match.index} className={`object-chip object-chip-${type}`}>
+            <span className="chip-icon">
+              {getChipIcon(type)}
+            </span>
+            <span className="chip-text">{name}</span>
           </span>
-          <span className="chip-text">{name}</span>
-        </span>
-      );
+        );
+      }
 
       lastIndex = match.index + match[0].length;
     }
@@ -369,6 +461,33 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
             }
           } catch (e) {
             console.error('Error parsing disambiguation data:', e);
+          }
+        }
+      }
+      
+      // Check if user is responding "Yes" to a typo suggestion
+      if (!previousMessage.isUser && previousMessage.content.includes('Are you referring to {{') && 
+          (lastMessage.content.toLowerCase().trim() === 'yes' || lastMessage.content.toLowerCase().trim() === 'y')) {
+        // Extract employee name from the suggestion
+        const suggestionMatch = previousMessage.content.match(/\{\{([^:]+):employee\}\}/);
+        if (suggestionMatch) {
+          const employeeName = suggestionMatch[1];
+          const employee = EMPLOYEE_DATABASE.employees.find(emp => emp.name === employeeName);
+          if (employee) {
+            const response = `Got it. Here is the latest paycheck for {{${employee.name}:employee}}.`;
+            setTimeout(() => {
+              onSendMessage(response, false);
+              // Then show the actual paycheck
+              setTimeout(() => {
+                const paycheckResponse = generateDetailedResponse({ data: employee });
+                onSendMessage(paycheckResponse, false, true, {
+                  originalDisambiguationContent: previousMessage.content,
+                  selectedCandidateIndex: 0,
+                  allCandidates: [{ data: employee }]
+                });
+              }, 1000);
+            }, 500);
+            return;
           }
         }
       }
@@ -576,7 +695,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
               <div className="message-bubble">
                 <div className="message-content">
                   {message.isUser ? (
-                    parseMessageContent(message.content)
+                    parseMessageContent(message.content, false)
                   ) : message.content.startsWith('{"type":"thinking"') ? (
                     <ThinkingComponent content={message.content} />
                   ) : (
@@ -708,8 +827,12 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect }) => {
     // For AI query responses, parse and make interactive
     return <div className="ai-reply-content">{parseAIContent(content)}</div>;
   } else {
-    // For regular AI responses, just parse bold text
-    return <div className="ai-reply-content">{parseBoldText(content)}</div>;
+    // For regular AI responses, parse for employee names and bold text
+    const parsedContent = parseMessageContent(content, true);
+    if (typeof parsedContent === 'string') {
+      return <div className="ai-reply-content">{parseBoldText(parsedContent)}</div>;
+    }
+    return <div className="ai-reply-content">{parsedContent}</div>;
   }
 };
 
