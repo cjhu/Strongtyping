@@ -92,27 +92,34 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 
   // Check for typos and suggest corrections
   const checkForTypos = (userMessage) => {
-    const words = userMessage.toLowerCase().split(/\s+/);
-    
-    // Look for potential name typos
-    for (const word of words) {
-      const cleanWord = word.replace(/[?!.,'"`]/g, '');
-      if (cleanWord.length < 3) continue;
+    try {
+      const words = userMessage.toLowerCase().split(/\s+/);
       
-      // Check against employee names
-      for (const employee of EMPLOYEE_DATABASE.employees) {
-        const fullName = employee.name.toLowerCase();
-        const firstName = employee.name.split(' ')[0].toLowerCase();
-        const lastName = employee.name.split(' ')[1]?.toLowerCase() || '';
+      // Look for potential name typos
+      for (const word of words) {
+        const cleanWord = word.replace(/[?!.,'"`]/g, '');
+        if (cleanWord.length < 3) continue;
         
-        // Check for similar names (simple fuzzy matching)
-        if (isSimilar(cleanWord, firstName) || isSimilar(cleanWord, lastName) || isSimilar(cleanWord, fullName.replace(/\s+/g, ''))) {
-          return `I couldn't find any ${cleanWord} in the system. There are many employees with the first name "Max." Are you referring to {{${employee.name}:employee}}?`;
+        // Check against employee names
+        for (const employee of EMPLOYEE_DATABASE.employees) {
+          if (!employee || !employee.name) continue;
+          
+          const fullName = employee.name.toLowerCase();
+          const firstName = employee.name.split(' ')[0]?.toLowerCase() || '';
+          const lastName = employee.name.split(' ')[1]?.toLowerCase() || '';
+          
+          // Check for similar names (simple fuzzy matching)
+          if (isSimilar(cleanWord, firstName) || isSimilar(cleanWord, lastName) || isSimilar(cleanWord, fullName.replace(/\s+/g, ''))) {
+            return `I couldn't find any ${cleanWord} in the system. There are many employees with the first name "Max." Are you referring to {{${employee.name}:employee}}?`;
+          }
         }
       }
+      
+      return null;
+    } catch (error) {
+      console.error('Error in checkForTypos:', error);
+      return null;
     }
-    
-    return null;
   };
 
   // Simple fuzzy matching function
@@ -175,24 +182,25 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 
   // Generate AI response with ambiguity resolution
   const generateAIResponse = (userMessage) => {
-    debugQuery(userMessage); // Debug what query is being processed
-    const lowerMessage = userMessage.toLowerCase();
+    try {
+      debugQuery(userMessage); // Debug what query is being processed
+      const lowerMessage = userMessage.toLowerCase();
 
-    // Check if it's a PTO request
-    if (lowerMessage.includes('time off') || lowerMessage.includes('pto') || 
-        lowerMessage.includes('vacation') || lowerMessage.includes('leave') ||
-        lowerMessage.includes('i need to take')) {
-      return generatePTOResponse();
-    }
+      // Check if it's a PTO request
+      if (lowerMessage.includes('time off') || lowerMessage.includes('pto') || 
+          lowerMessage.includes('vacation') || lowerMessage.includes('leave') ||
+          lowerMessage.includes('i need to take')) {
+        return generatePTOResponse();
+      }
 
-    // Check for typos and fuzzy matching first
-    const typoSuggestion = checkForTypos(userMessage);
-    if (typoSuggestion) {
-      return typoSuggestion;
-    }
+      // Check for typos and fuzzy matching first
+      const typoSuggestion = checkForTypos(userMessage);
+      if (typoSuggestion) {
+        return typoSuggestion;
+      }
 
-    // Find potential matches
-    const candidates = [];
+      // Find potential matches
+      const candidates = [];
 
     // Look for employee-related queries (expanded triggers)
     if (lowerMessage.includes('paycheck') ||
@@ -289,6 +297,10 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       const ambiguityResponse = generateAmbiguityResponse(candidates);
       setLastDisambiguationContent(ambiguityResponse);
       return ambiguityResponse;
+    }
+    } catch (error) {
+      console.error('Error in generateAIResponse:', error);
+      return "I'm having trouble processing your request. Please try again.";
     }
   };
 
@@ -508,11 +520,12 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       }, 500);
 
       // Generate AI response after thinking process completes
-      const totalThinkingTime = thinkingSteps.reduce((total, step) => total + step.duration, 0);
+      // Use fixed timing that matches ThinkingComponent: 200ms start + (800ms * steps) + 500ms buffer
+      const fixedThinkingTime = 200 + (thinkingSteps.length * 800) + 500;
       setTimeout(() => {
         const aiResponse = generateAIResponse(lastMessage.content);
         onSendMessage(aiResponse, false); // AI response is not from user
-      }, 500 + totalThinkingTime + 500); // Base delay + thinking time + buffer
+      }, 500 + fixedThinkingTime); // Base delay + fixed thinking time
     }
   }, [messages]);
 
