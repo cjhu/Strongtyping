@@ -227,6 +227,20 @@
   overflow-y: auto;
 }
 
+/* Hyperlink Styling */
+.hyperlink-style {
+  color: #667eea;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.hyperlink-style:hover {
+  color: #5a6fd8;
+  text-decoration: underline;
+}
+
 /* Object Chips */
 .object-chip {
   display: inline-flex;

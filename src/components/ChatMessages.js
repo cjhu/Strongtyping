@@ -497,6 +497,16 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         }
       }
       
+      // Check if user is responding "Yes" to a PTO submission request
+      if (!previousMessage.isUser && previousMessage.content.includes('Should I submit this request to your manager') && 
+          (lastMessage.content.toLowerCase().trim() === 'yes' || lastMessage.content.toLowerCase().trim() === 'y')) {
+        const confirmationResponse = `Submitted. You can ask me about the approval status anytime, or <span class="hyperlink-style">Go to the PTO app</span>.`;
+        setTimeout(() => {
+          onSendMessage(confirmationResponse, false);
+        }, 500);
+        return;
+      }
+      
       // Check if user is responding "Yes" to a typo suggestion
       if (!previousMessage.isUser && previousMessage.content.includes('Are you referring to {{') && 
           (lastMessage.content.toLowerCase().trim() === 'yes' || lastMessage.content.toLowerCase().trim() === 'y')) {
@@ -866,14 +876,24 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect, parseMessageCon
     });
   };
 
+  // Parse HTML content (for hyperlinks and other HTML elements)
+  const parseHTMLContent = (text) => {
+    // Check if content contains HTML span elements
+    if (text.includes('<span class="hyperlink-style">')) {
+      return <div dangerouslySetInnerHTML={{ __html: text }} />;
+    }
+    // Otherwise, parse as bold text
+    return parseBoldText(text);
+  };
+
   if (isAIQuery) {
     // For AI query responses, parse and make interactive
     return <div className="ai-reply-content">{parseAIContent(content)}</div>;
   } else {
-    // For regular AI responses, parse for employee names and bold text
+    // For regular AI responses, parse for employee names and HTML/bold text
     const parsedContent = parseMessageContent(content, true);
     if (typeof parsedContent === 'string') {
-      return <div className="ai-reply-content">{parseBoldText(parsedContent)}</div>;
+      return <div className="ai-reply-content">{parseHTMLContent(parsedContent)}</div>;
     }
     return <div className="ai-reply-content">{parsedContent}</div>;
   }
