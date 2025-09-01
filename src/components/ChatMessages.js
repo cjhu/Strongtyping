@@ -3,6 +3,7 @@ import PTORequestComponent from './PTORequestComponent';
 import ThinkingComponent from './ThinkingComponent';
 import DisambiguationDropdownNew from './DisambiguationDropdownNew';
 import EmployeeTooltip from './EmployeeTooltip';
+import ErrorBoundary from './ErrorBoundary';
 
 const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -697,7 +698,9 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
                   {message.isUser ? (
                     parseMessageContent(message.content, false)
                   ) : message.content.startsWith('{"type":"thinking"') ? (
-                    <ThinkingComponent content={message.content} />
+                    <ErrorBoundary>
+                      <ThinkingComponent content={message.content} />
+                    </ErrorBoundary>
                   ) : (
                     <AIReplyContent
                       content={message.content}

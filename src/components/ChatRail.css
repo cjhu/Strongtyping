@@ -188,6 +188,45 @@
   position: relative;
 }
 
+/* Error Boundary Styles */
+.error-boundary {
+  padding: 16px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  color: #991b1b;
+  margin: 8px 0;
+}
+
+.error-content {
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.error-boundary h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.error-boundary p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.error-boundary details {
+  text-align: left;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
 /* Object Chips */
 .object-chip {
   display: inline-flex;

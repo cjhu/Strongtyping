@@ -19,41 +19,49 @@ const ThinkingComponent = ({ content }) => {
 
   // Animate steps over time
   useEffect(() => {
-    if (steps.length === 0) return;
+    if (!steps || steps.length === 0) return;
 
-    let timeoutId;
-    let currentStepIndex = 0;
+    // Reset state when new content comes in
+    setCompletedSteps([]);
+    setCurrentStep(0);
+    setIsComplete(false);
+
+    const timeouts = [];
+    let totalTime = 0;
     
-    const animateNextStep = () => {
-      if (currentStepIndex < steps.length) {
-        const step = steps[currentStepIndex];
-        
-        // Mark current step as active
-        setCurrentStep(currentStepIndex);
-        
-        // After step duration, mark as completed and move to next
-        timeoutId = setTimeout(() => {
-          setCompletedSteps(prev => [...prev, currentStepIndex]);
-          currentStepIndex++;
-          
-          if (currentStepIndex < steps.length) {
-            animateNextStep();
-          } else {
-            // All steps completed
-            setIsComplete(true);
-            setCurrentStep(-1); // No active step
+    steps.forEach((step, index) => {
+      const stepDuration = typeof step.duration === 'number' ? step.duration : 500;
+      
+      // Set current step
+      const currentTimeout = setTimeout(() => {
+        setCurrentStep(index);
+      }, totalTime);
+      timeouts.push(currentTimeout);
+      
+      // Complete step
+      const completeTimeout = setTimeout(() => {
+        setCompletedSteps(prev => {
+          if (!prev.includes(index)) {
+            return [...prev, index];
           }
-        }, step.duration || 500);
-      }
-    };
-
-    // Start animation
-    animateNextStep();
+          return prev;
+        });
+        
+        // If this is the last step, mark as complete
+        if (index === steps.length - 1) {
+          setIsComplete(true);
+          setCurrentStep(-1);
+        }
+      }, totalTime + stepDuration);
+      timeouts.push(completeTimeout);
+      
+      totalTime += stepDuration;
+    });
 
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      timeouts.forEach(timeout => clearTimeout(timeout));
     };
-  }, [steps]);
+  }, [steps, content]); // Added content as dependency to reset on new data
 
   const getStepIcon = (stepType, stepIndex) => {
     if (completedSteps.includes(stepIndex)) {
@@ -77,7 +85,9 @@ const ThinkingComponent = ({ content }) => {
 
   const getStepTime = (stepIndex) => {
     if (completedSteps.includes(stepIndex)) {
-      return `${(steps[stepIndex].duration / 1000).toFixed(1)} secs`;
+      const step = steps[stepIndex];
+      const duration = typeof step?.duration === 'number' ? step.duration : 500;
+      return `${(duration / 1000).toFixed(1)} secs`;
     } else if (currentStep === stepIndex) {
       return '...';
     } else {
@@ -129,7 +139,7 @@ const ThinkingComponent = ({ content }) => {
               <div 
                 className="progress-fill" 
                 style={{ 
-                  width: `${((completedSteps.length + (currentStep >= 0 ? 0.5 : 0)) / steps.length) * 100}%` 
+                  width: steps.length > 0 ? `${((completedSteps.length + (currentStep >= 0 ? 0.5 : 0)) / steps.length) * 100}%` : '0%'
                 }}
               />
             </div>
