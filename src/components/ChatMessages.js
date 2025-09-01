@@ -24,17 +24,13 @@ const ChatMessages = ({ messages, onSendMessage }) => {
   // Mock PTO data for current user
   const PTO_DATA = {
     currentUser: 'Jared Hu',
-    policy: 'Standard PTO Policy',
+    policy: 'Unlimited / North America',
     year: 2025,
-    totalAllowed: 20, // days
-    used: 5.5, // days
-    remaining: 14.5, // days
-    pendingRequests: 2, // days
-    usedBreakdown: [
-      { date: '2025-01-15', days: 1, reason: 'Personal day' },
-      { date: '2025-02-20 - 2025-02-21', days: 2, reason: 'Long weekend' },
-      { date: '2025-03-10 - 2025-03-12', days: 2.5, reason: 'Family vacation' }
-    ]
+    totalAllowed: 'Unlimited', // Unlimited policy
+    used: 5, // days
+    remaining: 'Unlimited', // Unlimited remaining
+    pendingRequests: 0, // days
+    approvalRequired: 'Manager only'
   };
 
   // Debug function to help understand what queries are being processed
@@ -575,11 +571,16 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect }) => {
     const parsedContent = JSON.parse(content);
     if (parsedContent.type === 'pto_request') {
       const handlePTOSubmit = (requestData) => {
-        const confirmationMessage = `✅ **PTO Request Submitted**\n\n` +
-          `**Dates:** ${requestData.startDate} to ${requestData.endDate}\n` +
-          `**Days:** ${requestData.days} days\n` +
-          `**Reason:** ${requestData.reason}\n\n` +
-          `Your manager will be notified for approval. You'll receive a confirmation email shortly.`;
+        const startDate = new Date(requestData.startDate);
+        const endDate = new Date(requestData.endDate);
+        const formattedStart = startDate.toLocaleDateString('en-US', { 
+          month: 'short', day: 'numeric', year: 'numeric' 
+        });
+        const formattedEnd = endDate.toLocaleDateString('en-US', { 
+          month: 'short', day: 'numeric', year: 'numeric' 
+        });
+        
+        const confirmationMessage = `Should I submit this request to your manager Patricia Gonzalez for approval? You can add some additional notes, too.`;
         
         onCandidateSelect && onCandidateSelect(0, [{ 
           data: { response: confirmationMessage } 

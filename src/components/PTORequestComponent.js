@@ -7,26 +7,24 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
   const [reason, setReason] = useState('');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  const handleSubmitRequest = () => {
+  // Auto-submit when both dates are entered
+  React.useEffect(() => {
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
       
-      onSubmitRequest({
-        startDate,
-        endDate,
-        days: daysDiff,
-        reason: reason || 'Personal time off'
-      });
-      
-      // Reset form
-      setStartDate('');
-      setEndDate('');
-      setReason('');
-      setIsDatePickerOpen(false);
+      // Small delay to let user see the calculation
+      setTimeout(() => {
+        onSubmitRequest({
+          startDate,
+          endDate,
+          days: daysDiff,
+          reason: reason || 'Personal time off'
+        });
+      }, 1000);
     }
-  };
+  }, [startDate, endDate, reason, onSubmitRequest]);
 
   const calculateBusinessDays = (start, end) => {
     if (!start || !end) return 0;
@@ -39,7 +37,7 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
   };
 
   const requestedDays = calculateBusinessDays(startDate, endDate);
-  const wouldRemain = ptoData.remaining - requestedDays;
+  const wouldRemain = ptoData.remaining === 'Unlimited' ? 'Unlimited' : ptoData.remaining - requestedDays;
 
   return (
     <div className="pto-request-container">
@@ -53,45 +51,27 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
           </div>
         </div>
 
-        <div className="pto-stats">
-          <div className="pto-stat">
-            <div className="stat-label">Total Allowed</div>
-            <div className="stat-value">{ptoData.totalAllowed} days</div>
+        <div className="pto-unlimited">
+          <div className="unlimited-badge">Unlimited</div>
+          <div className="unlimited-subtitle">Days left this year</div>
+        </div>
+
+        <div className="pto-stats-simple">
+          <div className="stat-row">
+            <span className="stat-label">PTO days taken</span>
+            <span className="stat-value">{ptoData.used} days this year</span>
           </div>
-          <div className="pto-stat">
-            <div className="stat-label">Used</div>
-            <div className="stat-value used">{ptoData.used} days</div>
+          <div className="stat-row">
+            <span className="stat-label">Policy</span>
+            <span className="stat-value">{ptoData.policy}</span>
           </div>
-          <div className="pto-stat">
-            <div className="stat-label">Remaining</div>
-            <div className="stat-value remaining">{ptoData.remaining} days</div>
+          <div className="stat-row">
+            <span className="stat-label">Request approval</span>
+            <span className="stat-value">{ptoData.approvalRequired}</span>
           </div>
         </div>
 
-        <div className="pto-progress">
-          <div className="progress-bar">
-            <div 
-              className="progress-used" 
-              style={{ width: `${(ptoData.used / ptoData.totalAllowed) * 100}%` }}
-            ></div>
-            <div 
-              className="progress-pending" 
-              style={{ 
-                width: `${(ptoData.pendingRequests / ptoData.totalAllowed) * 100}%`,
-                left: `${(ptoData.used / ptoData.totalAllowed) * 100}%`
-              }}
-            ></div>
-          </div>
-          <div className="progress-labels">
-            <span>0 days</span>
-            <span>{ptoData.totalAllowed} days</span>
-          </div>
-        </div>
 
-        <div className="pto-policy">
-          <span className="policy-label">Policy:</span>
-          <span className="policy-name">{ptoData.policy}</span>
-        </div>
       </div>
 
       {/* Date Range Picker */}
@@ -125,75 +105,27 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
           </div>
         </div>
 
-        <div className="reason-input">
-          <label htmlFor="reason">Reason (optional)</label>
-          <input
-            type="text"
-            id="reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g., Family vacation, Personal day..."
-          />
-        </div>
-
         {startDate && endDate && (
           <div className="request-summary">
-            <div className="summary-row">
-              <span>Requested Days:</span>
-              <span className="summary-value">{requestedDays} days</span>
+            <div className="summary-header">
+              <span>You've selected {requestedDays} days ({startDate} - {endDate})</span>
             </div>
-            <div className="summary-row">
-              <span>Remaining After:</span>
-              <span className={`summary-value ${wouldRemain < 0 ? 'negative' : ''}`}>
-                {wouldRemain} days
-              </span>
-            </div>
-            {wouldRemain < 0 && (
-              <div className="warning">
-                ⚠️ This request exceeds your available PTO balance
+            <div className="summary-details">
+              <div className="summary-item">
+                <span>• {new Date(startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} through {new Date(endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
               </div>
-            )}
+              <div className="summary-item">
+                <span>• Using {requestedDays} business days of PTO</span>
+              </div>
+            </div>
+            <div className="processing-message">
+              <span>Processing your request...</span>
+            </div>
           </div>
         )}
-
-        <div className="action-buttons">
-          <button 
-            className="submit-button"
-            onClick={handleSubmitRequest}
-            disabled={!startDate || !endDate || wouldRemain < 0}
-          >
-            Submit Request
-          </button>
-          <button 
-            className="cancel-button"
-            onClick={() => {
-              setStartDate('');
-              setEndDate('');
-              setReason('');
-            }}
-          >
-            Clear
-          </button>
-        </div>
       </div>
 
-      {/* Recent Time Off */}
-      {ptoData.usedBreakdown && ptoData.usedBreakdown.length > 0 && (
-        <div className="recent-pto">
-          <h4>Recent Time Off</h4>
-          <div className="pto-history">
-            {ptoData.usedBreakdown.map((entry, index) => (
-              <div key={index} className="pto-entry">
-                <div className="entry-date">{entry.date}</div>
-                <div className="entry-details">
-                  <span className="entry-reason">{entry.reason}</span>
-                  <span className="entry-days">{entry.days} days</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };
