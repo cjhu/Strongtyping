@@ -183,6 +183,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   // Generate AI response with ambiguity resolution
   const generateAIResponse = (userMessage) => {
     try {
+      console.log('generateAIResponse called with:', userMessage);
       debugQuery(userMessage); // Debug what query is being processed
       const lowerMessage = userMessage.toLowerCase();
 
@@ -190,16 +191,20 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       if (lowerMessage.includes('time off') || lowerMessage.includes('pto') || 
           lowerMessage.includes('vacation') || lowerMessage.includes('leave') ||
           lowerMessage.includes('i need to take')) {
+        console.log('Detected PTO request');
         return generatePTOResponse();
       }
 
       // Check for typos and fuzzy matching first
+      console.log('Checking for typos...');
       const typoSuggestion = checkForTypos(userMessage);
       if (typoSuggestion) {
+        console.log('Found typo suggestion:', typoSuggestion);
         return typoSuggestion;
       }
 
       // Find potential matches
+      console.log('Looking for employee matches...');
       const candidates = [];
 
     // Look for employee-related queries (expanded triggers)
@@ -280,7 +285,9 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     }
 
     // Handle different response scenarios
+    console.log('Found', candidates.length, 'candidates');
     if (candidates.length === 0) {
+      console.log('No candidates found, returning fallback message');
       // Provide helpful suggestions based on query type
       if (lowerMessage.includes('department') || lowerMessage.includes('team')) {
         return "I can help you with information about departments. Try asking about:\n\n• Engineering department\n• Marketing team\n• Sales department\n• HR department\n• Finance department\n\nOr ask about specific employees!";
@@ -290,9 +297,11 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         return "I couldn't find any matching information. Try asking about:\n\n• Specific employees (e.g., 'What's Max's latest paycheck?')\n• Departments (e.g., 'Who manages Engineering?')\n• Payroll information (e.g., 'What's the salary for John Johnson?')\n\nI have data for 10 employees across 5 departments!";
       }
     } else if (candidates.length === 1) {
+      console.log('Single candidate found, generating detailed response for:', candidates[0].data?.name);
       // Single match - provide direct response
       return generateDetailedResponse(candidates[0]);
     } else {
+      console.log('Multiple candidates found, generating ambiguity response');
       // Multiple matches - show selection options
       const ambiguityResponse = generateAmbiguityResponse(candidates);
       setLastDisambiguationContent(ambiguityResponse);
@@ -306,11 +315,16 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 
   // Generate detailed response for single match
   const generateDetailedResponse = (candidate) => {
-    const employee = candidate.data;
-    
-    // If it's a paycheck query, return detailed paycheck card
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.content.toLowerCase().includes('paycheck')) {
+    try {
+      console.log('generateDetailedResponse called with candidate:', candidate);
+      const employee = candidate.data;
+      console.log('Employee data:', employee);
+      
+      // If it's a paycheck query, return detailed paycheck card
+      const lastMessage = messages[messages.length - 1];
+      console.log('Last message:', lastMessage?.content);
+      if (lastMessage && lastMessage.content.toLowerCase().includes('paycheck')) {
+        console.log('Generating paycheck response for:', employee.name);
       return `Here's **${employee.name}'s** latest paycheck:
 
 <div class="paycheck-card">
@@ -365,6 +379,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     }
     
     // Default employee information response
+    console.log('Generating default employee info response');
     return `**${employee.name}** information:\n\n` +
            `• **Department**: ${employee.department}\n` +
            `• **Role**: ${employee.role}\n` +
@@ -372,6 +387,10 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
            `• **Latest Paycheck**: ${employee.lastPaycheck}\n` +
            `• **Manager**: ${employee.manager}\n\n` +
            `Would you like more details or information about someone else?`;
+    } catch (error) {
+      console.error('Error in generateDetailedResponse:', error);
+      return "I'm having trouble generating the detailed response. Please try again.";
+    }
   };
 
   // Generate response with ambiguity options
@@ -523,8 +542,15 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       // Use fixed timing that matches ThinkingComponent: 200ms start + (800ms * steps) + 500ms buffer
       const fixedThinkingTime = 200 + (thinkingSteps.length * 800) + 500;
       setTimeout(() => {
-        const aiResponse = generateAIResponse(lastMessage.content);
-        onSendMessage(aiResponse, false); // AI response is not from user
+        try {
+          console.log('About to generate AI response for:', lastMessage.content);
+          const aiResponse = generateAIResponse(lastMessage.content);
+          console.log('AI response generated successfully:', aiResponse?.substring(0, 100) + '...');
+          onSendMessage(aiResponse, false); // AI response is not from user
+        } catch (error) {
+          console.error('Error generating AI response:', error);
+          onSendMessage("I'm sorry, I encountered an error processing your request. Please try again.", false);
+        }
       }, 500 + fixedThinkingTime); // Base delay + fixed thinking time
     }
   }, [messages]);
