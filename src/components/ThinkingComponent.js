@@ -4,7 +4,7 @@ import './ThinkingComponent.css';
 const ThinkingComponent = ({ content }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [completedSteps, setCompletedSteps] = useState([]);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(-1);
   const [isComplete, setIsComplete] = useState(false);
 
   // Parse the thinking data
@@ -12,56 +12,63 @@ const ThinkingComponent = ({ content }) => {
   try {
     thinkingData = JSON.parse(content);
   } catch (e) {
-    return <div>Error parsing thinking data</div>;
+    console.error('Error parsing thinking data:', e);
+    return <div className="thinking-component"><div className="thinking-header">Error loading thinking steps</div></div>;
   }
 
   const { steps = [], query = '' } = thinkingData;
 
-  // Animate steps over time
-  useEffect(() => {
-    if (!steps || steps.length === 0) return;
+  // Validate steps data
+  if (!Array.isArray(steps)) {
+    console.error('Steps is not an array:', steps);
+    return <div className="thinking-component"><div className="thinking-header">Invalid thinking data</div></div>;
+  }
 
-    // Reset state when new content comes in
+  // Simple step-by-step animation
+  useEffect(() => {
+    console.log('ThinkingComponent useEffect triggered, steps:', steps.length);
+    
+    if (steps.length === 0) {
+      console.log('No steps, marking complete');
+      setIsComplete(true);
+      return;
+    }
+
+    // Reset state
     setCompletedSteps([]);
-    setCurrentStep(0);
+    setCurrentStep(-1);
     setIsComplete(false);
 
-    const timeouts = [];
-    let totalTime = 0;
-    
-    steps.forEach((step, index) => {
-      const stepDuration = typeof step.duration === 'number' ? step.duration : 500;
-      
-      // Set current step
-      const currentTimeout = setTimeout(() => {
-        setCurrentStep(index);
-      }, totalTime);
-      timeouts.push(currentTimeout);
-      
-      // Complete step
-      const completeTimeout = setTimeout(() => {
-        setCompletedSteps(prev => {
-          if (!prev.includes(index)) {
-            return [...prev, index];
-          }
-          return prev;
-        });
+    let stepIndex = 0;
+    const animateStep = () => {
+      if (stepIndex < steps.length) {
+        // Set current step
+        setCurrentStep(stepIndex);
         
-        // If this is the last step, mark as complete
-        if (index === steps.length - 1) {
-          setIsComplete(true);
-          setCurrentStep(-1);
-        }
-      }, totalTime + stepDuration);
-      timeouts.push(completeTimeout);
-      
-      totalTime += stepDuration;
-    });
-
-    return () => {
-      timeouts.forEach(timeout => clearTimeout(timeout));
+        // After a delay, complete this step and move to next
+        setTimeout(() => {
+          setCompletedSteps(prev => [...prev, stepIndex]);
+          stepIndex++;
+          
+          if (stepIndex >= steps.length) {
+            // All done
+            setIsComplete(true);
+            setCurrentStep(-1);
+          } else {
+            // Continue with next step
+            setTimeout(animateStep, 100);
+          }
+        }, 800); // Fixed duration for simplicity
+      }
     };
-  }, [steps, content]); // Added content as dependency to reset on new data
+
+    // Start animation after a brief delay
+    const startTimeout = setTimeout(animateStep, 200);
+    
+    return () => {
+      clearTimeout(startTimeout);
+    };
+  }, [content]); // Only depend on content, not individual steps
 
   const getStepIcon = (stepType, stepIndex) => {
     if (completedSteps.includes(stepIndex)) {
@@ -85,9 +92,7 @@ const ThinkingComponent = ({ content }) => {
 
   const getStepTime = (stepIndex) => {
     if (completedSteps.includes(stepIndex)) {
-      const step = steps[stepIndex];
-      const duration = typeof step?.duration === 'number' ? step.duration : 500;
-      return `${(duration / 1000).toFixed(1)} secs`;
+      return '0.8 secs';
     } else if (currentStep === stepIndex) {
       return '...';
     } else {
@@ -139,7 +144,7 @@ const ThinkingComponent = ({ content }) => {
               <div 
                 className="progress-fill" 
                 style={{ 
-                  width: steps.length > 0 ? `${((completedSteps.length + (currentStep >= 0 ? 0.5 : 0)) / steps.length) * 100}%` : '0%'
+                  width: steps.length > 0 ? `${Math.min(100, (completedSteps.length / steps.length) * 100)}%` : '0%'
                 }}
               />
             </div>
