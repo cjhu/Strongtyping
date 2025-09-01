@@ -4,15 +4,17 @@ import './PTORequestComponent.css';
 const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [reason, setReason] = useState('');
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Auto-submit when both dates are entered
+  // Auto-submit when both dates are entered (only once)
   React.useEffect(() => {
-    if (startDate && endDate) {
+    if (startDate && endDate && !hasSubmitted) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      
+      // Mark as submitted to prevent multiple submissions
+      setHasSubmitted(true);
       
       // Small delay to let user see the calculation
       setTimeout(() => {
@@ -20,11 +22,11 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
           startDate,
           endDate,
           days: daysDiff,
-          reason: reason || 'Personal time off'
+          reason: 'Personal time off'
         });
       }, 1000);
     }
-  }, [startDate, endDate, reason, onSubmitRequest]);
+  }, [startDate, endDate]); // Removed onSubmitRequest and reason from dependencies
 
   const calculateBusinessDays = (start, end) => {
     if (!start || !end) return 0;
@@ -119,7 +121,7 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
               </div>
             </div>
             <div className="processing-message">
-              <span>Processing your request...</span>
+              <span>{hasSubmitted ? 'Request submitted!' : 'Processing your request...'}</span>
             </div>
           </div>
         )}
