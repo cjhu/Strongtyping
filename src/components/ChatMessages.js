@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PTORequestComponent from './PTORequestComponent';
 import ThinkingComponent from './ThinkingComponent';
+import DisambiguationDropdownNew from './DisambiguationDropdownNew';
 
 const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -9,10 +10,10 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   // Mock employee database for AI responses
   const EMPLOYEE_DATABASE = {
     employees: [
-      { id: 1, name: 'Max Frothingham', department: 'Product', role: 'Product Designer', salary: 115000, lastPaycheck: '2024-01-15', manager: 'Sarah Johnson' },
-      { id: 2, name: 'Max Jasso Jr.', department: 'Engineering', role: 'Director of QE', salary: 145000, lastPaycheck: '2024-01-15', manager: 'Jennifer Davis' },
-      { id: 3, name: 'Max Levchin', department: 'Engineering', role: 'Software Engineer', salary: 125000, lastPaycheck: '2024-01-10', manager: 'Michael Roberts' },
-      { id: 4, name: 'Max Wesel', department: 'Engineering', role: 'CTO', salary: 220000, lastPaycheck: '2024-01-15', manager: 'CEO' },
+      { id: 1, name: 'Max Frothingham', department: 'Product', role: 'Product Designer', salary: 115000, lastPaycheck: '2024-01-15', manager: 'Sarah Johnson', avatar: '👨🏻‍💼' },
+      { id: 2, name: 'Max Jasso Jr.', department: 'Engineering', role: 'Director of QE', salary: 145000, lastPaycheck: '2024-01-15', manager: 'Jennifer Davis', avatar: '👨🏽‍💻' },
+      { id: 3, name: 'Max Levchin', department: 'Engineering', role: 'Software Engineer', salary: 125000, lastPaycheck: '2024-01-10', manager: 'Michael Roberts', avatar: '👨🏻‍💻' },
+      { id: 4, name: 'Max Wesel', department: 'Engineering', role: 'CTO', salary: 220000, lastPaycheck: '2024-01-15', manager: 'CEO', avatar: '👨🏼‍💼' },
       { id: 5, name: 'Sarah Johnson', department: 'Engineering', role: 'Engineering Manager', salary: 140000, lastPaycheck: '2024-01-15', manager: 'CEO' },
       { id: 6, name: 'Jennifer Davis', department: 'Marketing', role: 'Marketing Director', salary: 125000, lastPaycheck: '2024-01-15', manager: 'CEO' },
       { id: 7, name: 'Michael Roberts', department: 'Sales', role: 'VP of Sales', salary: 160000, lastPaycheck: '2024-01-10', manager: 'CEO' },
@@ -280,11 +281,11 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 
   // Generate response with ambiguity options
   const generateAmbiguityResponse = (candidates) => {
-    const options = candidates.map((candidate, index) =>
-      `**${index + 1}. ${candidate.data.name}**\n   ${candidate.data.role} in ${candidate.data.department}`
-    ).join('\n\n');
-
-    return `I found ${candidates.length} possible matches. Which one do you mean?\n\n${options}\n\nReply with the number (1-${candidates.length}) to select.`;
+    return JSON.stringify({
+      type: 'disambiguation',
+      candidates: candidates,
+      message: `There are multiple ${candidates[0]?.data?.name?.split(' ')[0] || 'matches'} at Rippling, which one are you referring to?`
+    });
   };
 
   // Handle user selection from ambiguity response
@@ -350,7 +351,31 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   // Auto-generate AI responses for user queries
   React.useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.isUser && isAIQuery(lastMessage.content)) {
+    if (!lastMessage || !lastMessage.isUser) return;
+
+    // Check if user is responding to a disambiguation with a number
+    if (messages.length >= 2) {
+      const previousMessage = messages[messages.length - 2];
+      if (!previousMessage.isUser && previousMessage.content.includes('"type":"disambiguation"')) {
+        const numberMatch = lastMessage.content.trim().match(/^(\d+)$/);
+        if (numberMatch) {
+          const selectedIndex = parseInt(numberMatch[1]) - 1; // Convert to 0-based index
+          
+          try {
+            const disambiguationData = JSON.parse(previousMessage.content);
+            if (disambiguationData.candidates && selectedIndex >= 0 && selectedIndex < disambiguationData.candidates.length) {
+              handleAmbiguitySelection(selectedIndex, disambiguationData.candidates);
+              return;
+            }
+          } catch (e) {
+            console.error('Error parsing disambiguation data:', e);
+          }
+        }
+      }
+    }
+
+    // Handle regular AI queries
+    if (isAIQuery(lastMessage.content)) {
       // Show thinking process with steps
       const thinkingSteps = generateThinkingSteps(lastMessage.content);
       
@@ -586,20 +611,12 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect }) => {
     return <div dangerouslySetInnerHTML={{ __html: content }} />;
   }
 
-  // Check if content is a PTO request
+  // Check if content is JSON-based (PTO request, disambiguation, etc.)
   try {
     const parsedContent = JSON.parse(content);
+    
     if (parsedContent.type === 'pto_request') {
       const handlePTOSubmit = (requestData) => {
-        const startDate = new Date(requestData.startDate);
-        const endDate = new Date(requestData.endDate);
-        const formattedStart = startDate.toLocaleDateString('en-US', { 
-          month: 'short', day: 'numeric', year: 'numeric' 
-        });
-        const formattedEnd = endDate.toLocaleDateString('en-US', { 
-          month: 'short', day: 'numeric', year: 'numeric' 
-        });
-        
         const confirmationMessage = `Should I submit this request to your manager Patricia Gonzalez for approval? You can add some additional notes, too.`;
         
         onCandidateSelect && onCandidateSelect(0, [{ 
@@ -610,6 +627,13 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect }) => {
       return <PTORequestComponent 
         ptoData={parsedContent.data} 
         onSubmitRequest={handlePTOSubmit}
+      />;
+    }
+    
+    if (parsedContent.type === 'disambiguation') {
+      return <DisambiguationDropdownNew 
+        disambiguationData={parsedContent}
+        onSelect={onCandidateSelect}
       />;
     }
   } catch (e) {
