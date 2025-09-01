@@ -151,6 +151,43 @@
   text-align: left;
 }
 
+/* Undo Button */
+.undo-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: #6c757d;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 0.7;
+}
+
+.undo-button:hover {
+  opacity: 1;
+  background: #f8f9fa;
+  border-color: #adb5bd;
+  transform: scale(1.05);
+  color: #495057;
+}
+
+.undo-button:active {
+  transform: scale(0.95);
+}
+
+.message.assistant {
+  position: relative;
+}
+
 /* Object Chips */
 .object-chip {
   display: inline-flex;

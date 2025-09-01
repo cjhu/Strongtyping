@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import PTORequestComponent from './PTORequestComponent';
 import ThinkingComponent from './ThinkingComponent';
 
-const ChatMessages = ({ messages, onSendMessage }) => {
+const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [lastDisambiguationContent, setLastDisambiguationContent] = useState(null);
 
   // Mock employee database for AI responses
   const EMPLOYEE_DATABASE = {
     employees: [
-      { id: 1, name: 'Max Thompson', department: 'Engineering', role: 'Senior Engineer', salary: 120000, lastPaycheck: '2024-01-15', manager: 'Sarah Johnson' },
-      { id: 2, name: 'Max Rodriguez', department: 'Marketing', role: 'Marketing Manager', salary: 95000, lastPaycheck: '2024-01-15', manager: 'Jennifer Davis' },
-      { id: 3, name: 'Maxwell Chen', department: 'Sales', role: 'Sales Director', salary: 135000, lastPaycheck: '2024-01-10', manager: 'Michael Roberts' },
-      { id: 4, name: 'Max Patel', department: 'Engineering', role: 'DevOps Engineer', salary: 110000, lastPaycheck: '2024-01-15', manager: 'David Kim' },
+      { id: 1, name: 'Max Frothingham', department: 'Product', role: 'Product Designer', salary: 115000, lastPaycheck: '2024-01-15', manager: 'Sarah Johnson' },
+      { id: 2, name: 'Max Jasso Jr.', department: 'Engineering', role: 'Director of QE', salary: 145000, lastPaycheck: '2024-01-15', manager: 'Jennifer Davis' },
+      { id: 3, name: 'Max Levchin', department: 'Engineering', role: 'Software Engineer', salary: 125000, lastPaycheck: '2024-01-10', manager: 'Michael Roberts' },
+      { id: 4, name: 'Max Wesel', department: 'Engineering', role: 'CTO', salary: 220000, lastPaycheck: '2024-01-15', manager: 'CEO' },
       { id: 5, name: 'Sarah Johnson', department: 'Engineering', role: 'Engineering Manager', salary: 140000, lastPaycheck: '2024-01-15', manager: 'CEO' },
       { id: 6, name: 'Jennifer Davis', department: 'Marketing', role: 'Marketing Director', salary: 125000, lastPaycheck: '2024-01-15', manager: 'CEO' },
       { id: 7, name: 'Michael Roberts', department: 'Sales', role: 'VP of Sales', salary: 160000, lastPaycheck: '2024-01-10', manager: 'CEO' },
@@ -201,7 +202,9 @@ const ChatMessages = ({ messages, onSendMessage }) => {
       return generateDetailedResponse(candidates[0]);
     } else {
       // Multiple matches - show selection options
-      return generateAmbiguityResponse(candidates);
+      const ambiguityResponse = generateAmbiguityResponse(candidates);
+      setLastDisambiguationContent(ambiguityResponse);
+      return ambiguityResponse;
     }
   };
 
@@ -509,7 +512,19 @@ const ChatMessages = ({ messages, onSendMessage }) => {
       }
       
       const response = generateDetailedResponse(selectedCandidate);
-      onSendMessage(response, false); // AI response is not from user
+      
+      // Mark this response as undoable if it came from disambiguation
+      const canUndo = lastDisambiguationContent !== null;
+      const undoData = canUndo ? {
+        originalDisambiguationContent: lastDisambiguationContent,
+        selectedCandidateIndex: candidateIndex,
+        allCandidates: candidates
+      } : null;
+      
+      onSendMessage(response, false, canUndo, undoData); // AI response with undo capability
+      
+      // Clear the disambiguation content after use
+      setLastDisambiguationContent(null);
     }
   };
 
@@ -551,6 +566,11 @@ const ChatMessages = ({ messages, onSendMessage }) => {
                   {message.timestamp.toLocaleTimeString()}
                 </div>
               </div>
+              {!message.isUser && message.canUndo && (
+                <div className="undo-button" onClick={() => onUndo(message.id)} title="Undo selection">
+                  ↶
+                </div>
+              )}
             </div>
           );
         })
