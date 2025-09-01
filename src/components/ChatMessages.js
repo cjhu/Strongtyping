@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PTORequestComponent from './PTORequestComponent';
 
 const ChatMessages = ({ messages, onSendMessage }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -16,6 +17,22 @@ const ChatMessages = ({ messages, onSendMessage }) => {
       { id: 8, name: 'David Kim', department: 'Engineering', role: 'CTO', salary: 200000, lastPaycheck: '2024-01-15', manager: 'CEO' },
       { id: 9, name: 'Lisa Wong', department: 'HR', role: 'HR Manager', salary: 105000, lastPaycheck: '2024-01-15', manager: 'CEO' },
       { id: 10, name: 'Alex Turner', department: 'Finance', role: 'CFO', salary: 180000, lastPaycheck: '2024-01-15', manager: 'CEO' }
+    ]
+  };
+
+  // Mock PTO data for current user
+  const PTO_DATA = {
+    currentUser: 'Jared Hu',
+    policy: 'Standard PTO Policy',
+    year: 2025,
+    totalAllowed: 20, // days
+    used: 5.5, // days
+    remaining: 14.5, // days
+    pendingRequests: 2, // days
+    usedBreakdown: [
+      { date: '2025-01-15', days: 1, reason: 'Personal day' },
+      { date: '2025-02-20 - 2025-02-21', days: 2, reason: 'Long weekend' },
+      { date: '2025-03-10 - 2025-03-12', days: 2.5, reason: 'Family vacation' }
     ]
   };
 
@@ -40,13 +57,15 @@ const ChatMessages = ({ messages, onSendMessage }) => {
 
     const lowerMessage = message.toLowerCase().trim();
 
-    // Must be a question or query
+    // Must be a question, query, or action request
     if (!lowerMessage.includes('?') &&
         !lowerMessage.startsWith('what') &&
         !lowerMessage.startsWith('who') &&
         !lowerMessage.startsWith('how') &&
         !lowerMessage.startsWith('when') &&
         !lowerMessage.startsWith('where') &&
+        !lowerMessage.startsWith('i need') &&
+        !lowerMessage.startsWith('i want') &&
         !lowerMessage.includes('tell me') &&
         !lowerMessage.includes('show me') &&
         !lowerMessage.includes('give me') &&
@@ -55,11 +74,12 @@ const ChatMessages = ({ messages, onSendMessage }) => {
       return false;
     }
 
-    // Look for employee/payroll related keywords
+    // Look for employee/payroll/PTO related keywords
     const queryKeywords = [
       'paycheck', 'salary', 'payroll', 'employee', 'person',
       'department', 'team', 'manager', 'latest', 'last',
-      'total', 'budget', 'headcount', 'role', 'position'
+      'total', 'budget', 'headcount', 'role', 'position',
+      'time off', 'pto', 'vacation', 'leave', 'days off'
     ];
 
     const hasQueryKeyword = queryKeywords.some(keyword =>
@@ -69,10 +89,25 @@ const ChatMessages = ({ messages, onSendMessage }) => {
     return hasQueryKeyword;
   };
 
+  // Generate PTO response with balance and date picker
+  const generatePTOResponse = () => {
+    return JSON.stringify({
+      type: 'pto_request',
+      data: PTO_DATA
+    });
+  };
+
   // Generate AI response with ambiguity resolution
   const generateAIResponse = (userMessage) => {
     debugQuery(userMessage); // Debug what query is being processed
     const lowerMessage = userMessage.toLowerCase();
+
+    // Check if it's a PTO request
+    if (lowerMessage.includes('time off') || lowerMessage.includes('pto') || 
+        lowerMessage.includes('vacation') || lowerMessage.includes('leave') ||
+        lowerMessage.includes('i need to take')) {
+      return generatePTOResponse();
+    }
 
     // Find potential matches
     const candidates = [];
@@ -316,23 +351,131 @@ const ChatMessages = ({ messages, onSendMessage }) => {
   React.useEffect(() => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage && lastMessage.isUser && isAIQuery(lastMessage.content)) {
-      // Show thinking indicator first
+      // Show thinking process with steps
+      const thinkingSteps = generateThinkingSteps(lastMessage.content);
+      
       setTimeout(() => {
-        onSendMessage('__THINKING__', false);
+        onSendMessage(JSON.stringify({
+          type: 'thinking',
+          steps: thinkingSteps,
+          query: lastMessage.content
+        }), false);
       }, 500);
 
-      // Generate AI response after thinking delay
+      // Generate AI response after thinking process completes
+      const totalThinkingTime = thinkingSteps.reduce((total, step) => total + step.duration, 0);
       setTimeout(() => {
         const aiResponse = generateAIResponse(lastMessage.content);
         onSendMessage(aiResponse, false); // AI response is not from user
-      }, 2500); // 2.5 second total delay to simulate processing
+      }, 500 + totalThinkingTime + 500); // Base delay + thinking time + buffer
     }
   }, [messages]);
+
+  // Generate realistic thinking steps based on the query
+  const generateThinkingSteps = (query) => {
+    const lowerQuery = query.toLowerCase();
+    
+    if (lowerQuery.includes('paycheck') || lowerQuery.includes('pay')) {
+      return [
+        {
+          id: 1,
+          text: "Parsing request: Pay discrepancy for Leo Gong",
+          duration: 300,
+          type: "parsing"
+        },
+        {
+          id: 2,
+          text: "Looking up Leo Gong's employee record...",
+          duration: 500,
+          type: "lookup"
+        },
+        {
+          id: 3,
+          text: "Retrieving latest paystub (Aug 1 - Aug 15 2025)...",
+          duration: 400,
+          type: "retrieval"
+        },
+        {
+          id: 4,
+          text: "Calculating expected vs actual amounts...",
+          duration: 500,
+          type: "calculation"
+        },
+        {
+          id: 5,
+          text: "Checking basic payroll processing status...",
+          duration: 300,
+          type: "verification"
+        }
+      ];
+    } else if (lowerQuery.includes('who') || lowerQuery.includes('employee')) {
+      return [
+        {
+          id: 1,
+          text: "Parsing employee search query...",
+          duration: 200,
+          type: "parsing"
+        },
+        {
+          id: 2,
+          text: "Searching employee database...",
+          duration: 600,
+          type: "lookup"
+        },
+        {
+          id: 3,
+          text: "Checking for multiple matches...",
+          duration: 400,
+          type: "verification"
+        },
+        {
+          id: 4,
+          text: "Preparing employee information...",
+          duration: 300,
+          type: "preparation"
+        }
+      ];
+    } else {
+      return [
+        {
+          id: 1,
+          text: "Understanding your request...",
+          duration: 300,
+          type: "parsing"
+        },
+        {
+          id: 2,
+          text: "Searching relevant data sources...",
+          duration: 700,
+          type: "lookup"
+        },
+        {
+          id: 3,
+          text: "Analyzing available information...",
+          duration: 500,
+          type: "analysis"
+        },
+        {
+          id: 4,
+          text: "Preparing response...",
+          duration: 400,
+          type: "preparation"
+        }
+      ];
+    }
+  };
 
   // Handle selection from ambiguity options
   const handleAmbiguitySelection = (candidateIndex, candidates) => {
     if (candidateIndex >= 0 && candidateIndex < candidates.length) {
       const selectedCandidate = candidates[candidateIndex];
+      
+      // Check if this is a PTO confirmation response
+      if (selectedCandidate.data && selectedCandidate.data.response) {
+        onSendMessage(selectedCandidate.data.response, false);
+        return;
+      }
+      
       const response = generateDetailedResponse(selectedCandidate);
       onSendMessage(response, false); // AI response is not from user
     }
@@ -347,6 +490,7 @@ const ChatMessages = ({ messages, onSendMessage }) => {
           <p>Search, create, delete or make changes across all of Rippling. Here's some ideas to get started:</p>
           <p>• Use <strong>@</strong> to insert employees, departments, or other objects</p>
           <p>• Ask questions like "What's Max's latest paycheck?"</p>
+          <p>• Say "I need to take some time off" to request PTO</p>
         </div>
       ) : (
         messages.map(message => {
@@ -395,6 +539,31 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect }) => {
   // Check if content contains HTML (like paycheck cards)
   if (content.includes('<div class="paycheck-card">')) {
     return <div dangerouslySetInnerHTML={{ __html: content }} />;
+  }
+
+  // Check if content is a PTO request
+  try {
+    const parsedContent = JSON.parse(content);
+    if (parsedContent.type === 'pto_request') {
+      const handlePTOSubmit = (requestData) => {
+        const confirmationMessage = `✅ **PTO Request Submitted**\n\n` +
+          `**Dates:** ${requestData.startDate} to ${requestData.endDate}\n` +
+          `**Days:** ${requestData.days} days\n` +
+          `**Reason:** ${requestData.reason}\n\n` +
+          `Your manager will be notified for approval. You'll receive a confirmation email shortly.`;
+        
+        onCandidateSelect && onCandidateSelect(0, [{ 
+          data: { response: confirmationMessage } 
+        }]);
+      };
+
+      return <PTORequestComponent 
+        ptoData={parsedContent.data} 
+        onSubmitRequest={handlePTOSubmit}
+      />;
+    }
+  } catch (e) {
+    // Not JSON, continue with normal parsing
   }
 
   // Parse content to identify ambiguity options
