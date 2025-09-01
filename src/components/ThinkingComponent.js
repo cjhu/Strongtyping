@@ -3,8 +3,7 @@ import './ThinkingComponent.css';
 
 const ThinkingComponent = ({ content }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState([]);
-  const [currentStep, setCurrentStep] = useState(-1);
+  const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
 
   // Parse the thinking data
@@ -19,61 +18,39 @@ const ThinkingComponent = ({ content }) => {
   const { steps = [], query = '' } = thinkingData;
 
   // Validate steps data
-  if (!Array.isArray(steps)) {
-    console.error('Steps is not an array:', steps);
-    return <div className="thinking-component"><div className="thinking-header">Invalid thinking data</div></div>;
+  if (!Array.isArray(steps) || steps.length === 0) {
+    return <div className="thinking-component"><div className="thinking-header">Thinking complete</div></div>;
   }
 
-  // Simple step-by-step animation
+  // Ultra-simple progress animation
   useEffect(() => {
-    console.log('ThinkingComponent useEffect triggered, steps:', steps.length);
+    console.log('Starting thinking animation for', steps.length, 'steps');
     
-    if (steps.length === 0) {
-      console.log('No steps, marking complete');
-      setIsComplete(true);
-      return;
-    }
-
-    // Reset state
-    setCompletedSteps([]);
-    setCurrentStep(-1);
+    setProgress(0);
     setIsComplete(false);
 
-    let stepIndex = 0;
-    const animateStep = () => {
-      if (stepIndex < steps.length) {
-        // Set current step
-        setCurrentStep(stepIndex);
-        
-        // After a delay, complete this step and move to next
-        setTimeout(() => {
-          setCompletedSteps(prev => [...prev, stepIndex]);
-          stepIndex++;
-          
-          if (stepIndex >= steps.length) {
-            // All done
-            setIsComplete(true);
-            setCurrentStep(-1);
-          } else {
-            // Continue with next step
-            setTimeout(animateStep, 100);
-          }
-        }, 800); // Fixed duration for simplicity
+    // Simple interval-based progress
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += 1;
+      setProgress(currentProgress);
+      
+      if (currentProgress >= steps.length) {
+        setIsComplete(true);
+        clearInterval(interval);
+        console.log('Thinking animation complete');
       }
-    };
+    }, 800);
 
-    // Start animation after a brief delay
-    const startTimeout = setTimeout(animateStep, 200);
-    
     return () => {
-      clearTimeout(startTimeout);
+      clearInterval(interval);
     };
-  }, [content]); // Only depend on content, not individual steps
+  }, [content, steps.length]);
 
   const getStepIcon = (stepType, stepIndex) => {
-    if (completedSteps.includes(stepIndex)) {
+    if (stepIndex < progress) {
       return '✅';
-    } else if (currentStep === stepIndex) {
+    } else if (stepIndex === progress) {
       return '⚡';
     } else {
       // Icon based on step type
@@ -91,9 +68,9 @@ const ThinkingComponent = ({ content }) => {
   };
 
   const getStepTime = (stepIndex) => {
-    if (completedSteps.includes(stepIndex)) {
+    if (stepIndex < progress) {
       return '0.8 secs';
-    } else if (currentStep === stepIndex) {
+    } else if (stepIndex === progress) {
       return '...';
     } else {
       return '';
@@ -119,10 +96,10 @@ const ThinkingComponent = ({ content }) => {
         <div className="thinking-steps">
           {steps.map((step, index) => (
             <div 
-              key={step.id} 
+              key={step.id || index} 
               className={`thinking-step ${
-                completedSteps.includes(index) ? 'completed' : 
-                currentStep === index ? 'active' : 'pending'
+                index < progress ? 'completed' : 
+                index === progress ? 'active' : 'pending'
               }`}
             >
               <div className="step-icon">
@@ -144,12 +121,12 @@ const ThinkingComponent = ({ content }) => {
               <div 
                 className="progress-fill" 
                 style={{ 
-                  width: steps.length > 0 ? `${Math.min(100, (completedSteps.length / steps.length) * 100)}%` : '0%'
+                  width: steps.length > 0 ? `${Math.min(100, (progress / steps.length) * 100)}%` : '0%'
                 }}
               />
             </div>
             <span className="progress-text">
-              {completedSteps.length} of {steps.length} steps
+              {Math.min(progress, steps.length)} of {steps.length} steps
             </span>
           </div>
         </div>
