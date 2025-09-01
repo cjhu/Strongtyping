@@ -745,6 +745,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
                       content={message.content}
                       isAIQuery={isAIQueryMessage}
                       onCandidateSelect={handleAmbiguitySelection}
+                      parseMessageContent={parseMessageContent}
                     />
                   )}
                 </div>
@@ -766,7 +767,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 };
 
 // Component to render AI replies with interactive options
-const AIReplyContent = ({ content, isAIQuery, onCandidateSelect }) => {
+const AIReplyContent = ({ content, isAIQuery, onCandidateSelect, parseMessageContent }) => {
   // Check if content contains HTML (like paycheck cards)
   if (content.includes('<div class="paycheck-card">')) {
     return <div dangerouslySetInnerHTML={{ __html: content }} />;
