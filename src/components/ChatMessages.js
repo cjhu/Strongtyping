@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PTORequestComponent from './PTORequestComponent';
+import ThinkingComponent from './ThinkingComponent';
 
 const ChatMessages = ({ messages, onSendMessage }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -375,17 +376,52 @@ const ChatMessages = ({ messages, onSendMessage }) => {
   const generateThinkingSteps = (query) => {
     const lowerQuery = query.toLowerCase();
     
-    if (lowerQuery.includes('paycheck') || lowerQuery.includes('pay')) {
+    if (lowerQuery.includes('time off') || lowerQuery.includes('pto') || 
+        lowerQuery.includes('vacation') || lowerQuery.includes('leave') ||
+        lowerQuery.includes('i need to take')) {
       return [
         {
           id: 1,
-          text: "Parsing request: Pay discrepancy for Leo Gong",
+          text: "Parsing request: Time off request for Jared Hu",
           duration: 300,
           type: "parsing"
         },
         {
           id: 2,
-          text: "Looking up Leo Gong's employee record...",
+          text: "Looking up current PTO balance and policy...",
+          duration: 600,
+          type: "lookup"
+        },
+        {
+          id: 3,
+          text: "Retrieving PTO history and usage patterns...",
+          duration: 500,
+          type: "retrieval"
+        },
+        {
+          id: 4,
+          text: "Checking pending requests and availability...",
+          duration: 400,
+          type: "verification"
+        },
+        {
+          id: 5,
+          text: "Preparing PTO dashboard and date picker...",
+          duration: 700,
+          type: "preparation"
+        }
+      ];
+    } else if (lowerQuery.includes('paycheck') || lowerQuery.includes('pay')) {
+      return [
+        {
+          id: 1,
+          text: "Parsing request: Pay information request",
+          duration: 300,
+          type: "parsing"
+        },
+        {
+          id: 2,
+          text: "Looking up employee payroll records...",
           duration: 500,
           type: "lookup"
         },
@@ -403,9 +439,9 @@ const ChatMessages = ({ messages, onSendMessage }) => {
         },
         {
           id: 5,
-          text: "Checking basic payroll processing status...",
+          text: "Formatting paycheck details...",
           duration: 300,
-          type: "verification"
+          type: "preparation"
         }
       ];
     } else if (lowerQuery.includes('who') || lowerQuery.includes('employee')) {
@@ -505,15 +541,8 @@ const ChatMessages = ({ messages, onSendMessage }) => {
                 <div className="message-content">
                   {message.isUser ? (
                     parseMessageContent(message.content)
-                  ) : message.content === '__THINKING__' ? (
-                    <div className="thinking-indicator">
-                      <span>Thinking</span>
-                      <div className="thinking-dots">
-                        <div className="thinking-dot"></div>
-                        <div className="thinking-dot"></div>
-                        <div className="thinking-dot"></div>
-                      </div>
-                    </div>
+                  ) : message.content.startsWith('{"type":"thinking"') ? (
+                    <ThinkingComponent content={message.content} />
                   ) : (
                     <AIReplyContent
                       content={message.content}

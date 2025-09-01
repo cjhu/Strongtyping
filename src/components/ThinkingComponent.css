@@ -1,0 +1,201 @@
+.thinking-component {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 8px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.thinking-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.thinking-header:hover {
+  background-color: #f8f9fa;
+}
+
+.thinking-icon {
+  font-size: 18px;
+  margin-right: 12px;
+}
+
+.thinking-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.expand-icon {
+  font-size: 12px;
+  color: #6c757d;
+  transition: transform 0.2s ease;
+}
+
+.thinking-header:hover .expand-icon {
+  color: #495057;
+}
+
+.thinking-steps {
+  padding: 0;
+  background: #f8f9fa;
+}
+
+.thinking-step {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.thinking-step:last-child {
+  border-bottom: none;
+}
+
+.thinking-step.pending {
+  opacity: 0.5;
+}
+
+.thinking-step.active {
+  background-color: #fff3cd;
+  border-left: 3px solid #ffc107;
+  padding-left: 17px;
+}
+
+.thinking-step.completed {
+  background-color: #d1ecf1;
+  border-left: 3px solid #28a745;
+  padding-left: 17px;
+}
+
+.step-icon {
+  font-size: 16px;
+  margin-right: 12px;
+  margin-top: 2px;
+  min-width: 20px;
+}
+
+.step-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.step-text {
+  font-size: 14px;
+  color: #495057;
+  line-height: 1.4;
+}
+
+.step-time {
+  font-size: 12px;
+  color: #6c757d;
+  margin-left: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.thinking-step.active .step-time {
+  color: #856404;
+}
+
+.thinking-step.completed .step-time {
+  color: #155724;
+}
+
+.thinking-summary {
+  padding: 16px 20px;
+  background: #f8f9fa;
+}
+
+.summary-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Animation for active step icon */
+.thinking-step.active .step-icon {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Smooth expansion animation */
+.thinking-steps {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 400px;
+    opacity: 1;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .thinking-header {
+    padding: 14px 16px;
+  }
+  
+  .thinking-step {
+    padding: 10px 16px;
+  }
+  
+  .thinking-summary {
+    padding: 14px 16px;
+  }
+  
+  .step-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .step-time {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+}
