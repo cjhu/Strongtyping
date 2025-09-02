@@ -785,6 +785,61 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
           onSendMessage("I'm sorry, I encountered an error processing your request. Please try again.", false);
         }
       }, 500 + fixedThinkingTime); // Base delay + fixed thinking time
+    } 
+    // Handle strongtyped queries (messages with {{Name:Type}} chips)
+    else {
+      const chipRegex = /\{\{([^:]+):([^}]+)\}\}/g;
+      const hasChips = chipRegex.test(lastMessage.content);
+      
+      if (hasChips) {
+        const lowerMessage = lastMessage.content.toLowerCase();
+        
+        // Check if it's a paycheck-related strongtyped query
+        if (lowerMessage.includes('paycheck') || lowerMessage.includes('salary') || 
+            lowerMessage.includes('pay') || lowerMessage.includes('latest')) {
+          console.log('🎯 Detected strongtyped paycheck query:', lastMessage.content);
+          
+          // Extract employee from the chip
+          const chipMatch = lastMessage.content.match(/\{\{([^:]+):employee\}\}/);
+          if (chipMatch) {
+            const employeeName = chipMatch[1];
+            const employee = EMPLOYEE_DATABASE.employees.find(emp => emp.name === employeeName);
+            
+            if (employee) {
+              console.log('✅ Found employee for strongtyped query:', employee.name);
+              
+              // Show thinking process for strongtyped queries too
+              const thinkingSteps = generateThinkingSteps(lastMessage.content);
+              
+              setTimeout(() => {
+                onSendMessage(JSON.stringify({
+                  type: 'thinking',
+                  steps: thinkingSteps,
+                  query: lastMessage.content
+                }), false);
+              }, 500);
+
+              // Generate direct paycheck response
+              const fixedThinkingTime = 200 + (thinkingSteps.length * 800) + 500;
+              setTimeout(() => {
+                try {
+                  const paycheckResponse = generateDetailedResponse({ data: employee });
+                  console.log('✅ Generated strongtyped paycheck response');
+                  onSendMessage(paycheckResponse, false);
+                } catch (error) {
+                  console.error('Error generating strongtyped response:', error);
+                  onSendMessage("I'm sorry, I encountered an error processing your request. Please try again.", false);
+                }
+              }, 500 + fixedThinkingTime);
+            } else {
+              console.log('❌ Employee not found in database:', employeeName);
+              setTimeout(() => {
+                onSendMessage(`I couldn't find an employee named "${employeeName}" in our system.`, false);
+              }, 500);
+            }
+          }
+        }
+      }
     }
   }, [messages]);
 
