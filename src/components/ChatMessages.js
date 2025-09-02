@@ -116,12 +116,33 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     return hasQueryKeyword;
   };
 
-  // Check for typos in a single name
+  // Check for typos in a single name - but avoid false positives for valid names
   const checkForTypoInName = (nameToCheck) => {
     try {
       if (!nameToCheck || nameToCheck.length < 3) return null;
       
-      // Check against employee names
+      const searchName = nameToCheck.toLowerCase();
+      
+      // First, check if this is an exact or close match to any employee name
+      // If so, don't treat it as a typo - let normal matching handle it
+      for (const employee of EMPLOYEE_DATABASE.employees) {
+        if (!employee || !employee.name) continue;
+        
+        const firstName = employee.name.split(' ')[0]?.toLowerCase() || '';
+        const lastName = employee.name.split(' ')[1]?.toLowerCase() || '';
+        
+        // If it's an exact match or very close match, don't treat as typo
+        if (searchName === firstName || 
+            searchName === lastName ||
+            firstName.includes(searchName) ||
+            lastName.includes(searchName) ||
+            searchName.includes(firstName)) {
+          console.log(`DEBUG: "${nameToCheck}" is too close to "${employee.name}" - not a typo`);
+          return null; // Not a typo, let normal matching handle it
+        }
+      }
+      
+      // Only check for fuzzy matching if it's not a close match to existing names
       for (const employee of EMPLOYEE_DATABASE.employees) {
         if (!employee || !employee.name) continue;
         
@@ -129,11 +150,12 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         const firstName = employee.name.split(' ')[0]?.toLowerCase() || '';
         const lastName = employee.name.split(' ')[1]?.toLowerCase() || '';
         
-        // Check for similar names (simple fuzzy matching)
-        if (isSimilar(nameToCheck.toLowerCase(), firstName) || 
-            isSimilar(nameToCheck.toLowerCase(), lastName) || 
-            isSimilar(nameToCheck.toLowerCase(), fullName.replace(/\s+/g, ''))) {
-          return `I couldn't find any ${nameToCheck} in the system. There are many employees with the first name "Max." Are you referring to {{${employee.name}:employee}}?`;
+        // Check for similar names (fuzzy matching for actual typos)
+        if (isSimilar(searchName, firstName) || 
+            isSimilar(searchName, lastName) || 
+            isSimilar(searchName, fullName.replace(/\s+/g, ''))) {
+          console.log(`DEBUG: "${nameToCheck}" appears to be a typo of "${employee.name}"`);
+          return `I couldn't find any ${nameToCheck} in the system. Are you referring to {{${employee.name}:employee}}?`;
         }
       }
       
@@ -311,8 +333,43 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       console.log('DEBUG: Additional names (common names):', additionalNames);
       console.log('DEBUG: All potential names (combined):', allPotentialNames);
 
-      // Skip typo checking for now - let normal matching happen first
-      console.log('Skipping typo check - will do normal matching first:', allPotentialNames);
+      // First, try normal matching - only check typos if no exact matches found
+      console.log('Checking for exact matches first:', allPotentialNames);
+      
+      // Check for typos in names that might be misspelled (but not possessive forms)
+      for (const name of allPotentialNames) {
+        let cleanName = name.replace(/[?!.,'"`]/g, '');
+        if (cleanName.endsWith("'s")) {
+          cleanName = cleanName.slice(0, -2);
+        }
+        
+        // Only check for typos if this specific name won't generate any normal matches
+        // This prevents possessive forms like "max's" from being treated as typos
+        const willHaveMatches = EMPLOYEE_DATABASE.employees.some(employee => {
+          const employeeName = employee.name.toLowerCase();
+          const searchName = cleanName.toLowerCase();
+          const firstName = employeeName.split(' ')[0];
+          const lastName = employeeName.split(' ')[1] || '';
+          
+          return employeeName.includes(searchName) ||
+                 searchName.includes(firstName) ||
+                 searchName.includes(lastName) ||
+                 firstName.includes(searchName) ||
+                 lastName.includes(searchName);
+        });
+        
+        // Only check for typos if this name won't match anyone normally
+        if (!willHaveMatches) {
+          console.log(`DEBUG: "${cleanName}" won't match normally, checking for typos...`);
+          const typoSuggestion = checkForTypoInName(cleanName);
+          if (typoSuggestion) {
+            console.log('Found typo suggestion for name:', cleanName, '→', typoSuggestion);
+            return typoSuggestion;
+          }
+        } else {
+          console.log(`DEBUG: "${cleanName}" will match normally, skipping typo check`);
+        }
+      }
 
       // Also try partial matches and common name variations
       allPotentialNames.forEach(name => {
