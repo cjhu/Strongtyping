@@ -121,8 +121,8 @@
 }
 
 .date-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -237,11 +237,16 @@
 
 /* Responsive Design */
 @media (max-width: 480px) {
-  .date-inputs {
-    grid-template-columns: 1fr;
-  }
-  
   .unlimited-badge {
     font-size: 28px;
+  }
+  
+  .date-input-group input[type="date"] {
+    padding: 10px 14px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .date-input-group label {
+    font-size: 13px;
   }
 }
