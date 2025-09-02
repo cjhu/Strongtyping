@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PTORequestComponent from './PTORequestComponent';
 import ThinkingComponent from './ThinkingComponent';
 import DisambiguationDropdownNew from './DisambiguationDropdownNew';
@@ -8,6 +8,32 @@ import ErrorBoundary from './ErrorBoundary';
 const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [lastDisambiguationContent, setLastDisambiguationContent] = useState(null);
+  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+
+  // Auto-scroll to bottom function
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end'
+      });
+    }
+  };
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Auto-scroll after a short delay for dynamic content (like thinking animations)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [messages.length]);
 
   // Mock employee database for AI responses
   const EMPLOYEE_DATABASE = {
@@ -773,7 +799,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   };
 
   return (
-    <div className="chat-messages">
+    <div className="chat-messages" ref={chatContainerRef}>
       {messages.length === 0 ? (
         <div className="chat-empty-state">
           <div className="empty-icon">💬</div>
@@ -823,6 +849,8 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
           );
         })
       )}
+      {/* Scroll target for auto-scroll */}
+      <div ref={messagesEndRef} />
     </div>
   );
 };
