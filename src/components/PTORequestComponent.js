@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './PTORequestComponent.css';
 
-const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
+const PTORequestComponent = ({ ptoData, onSubmitRequest, onSendMessage }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -16,15 +16,19 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
       // Mark as submitted to prevent multiple submissions
       setHasSubmitted(true);
       
-      // Small delay to let user see the calculation
+      // Send AI confirmation message first
+      const startFormatted = new Date(startDate).toLocaleDateString('en-US', { 
+        month: 'short', day: 'numeric', year: 'numeric' 
+      });
+      const endFormatted = new Date(endDate).toLocaleDateString('en-US', { 
+        month: 'short', day: 'numeric', year: 'numeric' 
+      });
+      
+      const confirmationMessage = `You've selected ${daysDiff} days (${startFormatted} - ${endFormatted}). This would be:\n\n• ${new Date(startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} through ${new Date(endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}\n• Using ${daysDiff} business days of PTO\n\nShould I submit this request to your manager Patricia Gonzalez for approval? You can add some additional notes, too.`;
+      
       setTimeout(() => {
-        onSubmitRequest({
-          startDate,
-          endDate,
-          days: daysDiff,
-          reason: 'Personal time off'
-        });
-      }, 1000);
+        onSendMessage && onSendMessage(confirmationMessage, false);
+      }, 500);
     }
   }, [startDate, endDate]); // Removed onSubmitRequest and reason from dependencies
 
@@ -107,24 +111,7 @@ const PTORequestComponent = ({ ptoData, onSubmitRequest }) => {
           </div>
         </div>
 
-        {startDate && endDate && (
-          <div className="request-summary">
-            <div className="summary-header">
-              <span>You've selected {requestedDays} days ({startDate} - {endDate})</span>
-            </div>
-            <div className="summary-details">
-              <div className="summary-item">
-                <span>• {new Date(startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} through {new Date(endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
-              </div>
-              <div className="summary-item">
-                <span>• Using {requestedDays} business days of PTO</span>
-              </div>
-            </div>
-            <div className="processing-message">
-              <span>{hasSubmitted ? 'Request submitted!' : 'Processing your request...'}</span>
-            </div>
-          </div>
-        )}
+
       </div>
 
 

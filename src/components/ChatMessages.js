@@ -806,6 +806,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
                       isAIQuery={isAIQueryMessage}
                       onCandidateSelect={handleAmbiguitySelection}
                       parseMessageContent={parseMessageContent}
+                      onSendMessage={onSendMessage}
                     />
                   )}
                 </div>
@@ -827,7 +828,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 };
 
 // Component to render AI replies with interactive options
-const AIReplyContent = ({ content, isAIQuery, onCandidateSelect, parseMessageContent }) => {
+const AIReplyContent = ({ content, isAIQuery, onCandidateSelect, parseMessageContent, onSendMessage }) => {
   // Check if content contains HTML (like paycheck cards)
   if (content.includes('<div class="paycheck-card">')) {
     return <div dangerouslySetInnerHTML={{ __html: content }} />;
@@ -849,6 +850,7 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect, parseMessageCon
       return <PTORequestComponent 
         ptoData={parsedContent.data} 
         onSubmitRequest={handlePTOSubmit}
+        onSendMessage={onSendMessage}
       />;
     }
     
