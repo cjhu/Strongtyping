@@ -268,28 +268,44 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 
       // Extract potential names (more flexible approach)
       const words = userMessage.split(/\s+/);
+      
+      // Expanded stop words to filter out non-names
+      const stopWords = [
+        'what', 'who', 'how', 'when', 'where', 'the', 'is', 'are', 'do', 'does', 
+        'tell', 'me', 'about', 'a', 'an', 'show', 'latest', 'paycheck', 'salary',
+        'payroll', 'get', 'find', 'lookup', 'see', 'give', 'want', 'need'
+      ];
+      
       const potentialNames = words.filter(word => {
         // Handle possessive forms - remove 's at the end
         let cleanWord = word.replace(/[?!.,'"`]/g, ''); // Remove punctuation
         if (cleanWord.endsWith("'s")) {
           cleanWord = cleanWord.slice(0, -2); // Remove 's
         }
-        return cleanWord.length > 1 &&
-               !['what', 'who', 'how', 'when', 'where', 'the', 'is', 'are', 'do', 'does', 'tell', 'me', 'about', 'a', 'an', 'show', 'latest'].includes(cleanWord.toLowerCase());
+        return cleanWord.length > 1 && !stopWords.includes(cleanWord.toLowerCase());
       });
 
       // Also try common names that might not be capitalized
       const commonNames = ['max', 'john', 'sarah', 'jennifer', 'michael', 'david', 'lisa', 'alex'];
       const lowerMessageWords = lowerMessage.split(/\s+/);
       const additionalNames = lowerMessageWords.filter(word => {
-        const cleanWord = word.replace(/[?!.,'"`]/g, '');
+        let cleanWord = word.replace(/[?!.,'"`]/g, '');
+        if (cleanWord.endsWith("'s")) {
+          cleanWord = cleanWord.slice(0, -2);
+        }
         return cleanWord.length > 1 &&
                commonNames.includes(cleanWord.toLowerCase()) &&
-               !['what', 'who', 'how', 'when', 'where', 'the', 'is', 'are', 'do', 'does'].includes(cleanWord.toLowerCase());
+               !stopWords.includes(cleanWord.toLowerCase());
       });
 
-      // Combine both lists
-      const allPotentialNames = [...potentialNames, ...additionalNames];
+      // Combine both lists and remove duplicates
+      const allPotentialNames = [...new Set([...potentialNames, ...additionalNames])];
+
+      console.log('DEBUG: Input message:', userMessage);
+      console.log('DEBUG: All words:', words);
+      console.log('DEBUG: Potential names (after filtering):', potentialNames);
+      console.log('DEBUG: Additional names (common names):', additionalNames);
+      console.log('DEBUG: All potential names (combined):', allPotentialNames);
 
       // Check for typos in extracted names BEFORE matching
       console.log('Checking for typos in extracted names:', allPotentialNames);
@@ -314,23 +330,32 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         if (cleanName.endsWith("'s")) {
           cleanName = cleanName.slice(0, -2);
         }
-        console.log('Searching for name:', cleanName);
+        console.log('DEBUG: Searching for name:', cleanName);
         EMPLOYEE_DATABASE.employees.forEach(employee => {
           const employeeName = employee.name.toLowerCase();
           const searchName = cleanName.toLowerCase();
+          
+          console.log(`DEBUG: Comparing "${searchName}" with employee "${employeeName}"`);
 
           // Check for exact match, partial match, or first/last name match
-          if (employeeName.includes(searchName) ||
-              searchName.includes(employeeName.split(' ')[0]) ||
-              searchName.includes(employeeName.split(' ')[1]) ||
-              employeeName.split(' ')[0].includes(searchName) ||
-              employeeName.split(' ')[1]?.includes(searchName)) {
-            console.log('Found candidate:', employee.name);
+          const firstName = employeeName.split(' ')[0];
+          const lastName = employeeName.split(' ')[1] || '';
+          
+          const matches = employeeName.includes(searchName) ||
+                         searchName.includes(firstName) ||
+                         searchName.includes(lastName) ||
+                         firstName.includes(searchName) ||
+                         lastName.includes(searchName);
+          
+          if (matches) {
+            console.log('DEBUG: ✅ Found candidate:', employee.name);
             candidates.push({
               type: 'employee',
               data: employee,
               relevance: 'name_match'
             });
+          } else {
+            console.log('DEBUG: ❌ No match');
           }
         });
       });
@@ -372,6 +397,10 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         console.log('Found typo suggestion:', typoSuggestion);
         return typoSuggestion;
       }
+
+      console.log('No typos found, returning fallback message');
+      // Return fallback message if no candidates and no typos found
+      return "I couldn't find any matching information. Try asking about specific employees or departments.";
     } else if (uniqueCandidates.length === 1) {
       console.log('Single candidate found, generating detailed response for:', uniqueCandidates[0].data?.name);
       // Single match - provide direct response
