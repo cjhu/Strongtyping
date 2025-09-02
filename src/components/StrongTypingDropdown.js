@@ -28,7 +28,7 @@ const MOCK_DATA = {
     // D names
     { id: 16, name: 'Daniel Davis', displayName: 'Daniel Davis', type: 'employee' },
     { id: 17, name: 'Diana Dixon', displayName: 'Diana Dixon', type: 'employee' },
-    { id: 18, name: 'David Delgado', displayName: 'David Delgado', type: 'employee' },
+    { id: 18, name: 'David Kim', displayName: 'David Kim', type: 'employee' },
     { id: 19, name: 'Donna Duncan', displayName: 'Donna Duncan', type: 'employee' },
     { id: 20, name: 'Derek Diaz', displayName: 'Derek Diaz', type: 'employee' },
 
@@ -43,22 +43,22 @@ const MOCK_DATA = {
     { id: 26, name: 'John Johnson', displayName: 'John Johnson', type: 'employee' },
     { id: 27, name: 'Jane Jackson', displayName: 'Jane Jackson', type: 'employee' },
     { id: 28, name: 'James Jordan', displayName: 'James Jordan', type: 'employee' },
-    { id: 29, name: 'Jennifer Jenkins', displayName: 'Jennifer Jenkins', type: 'employee' },
+    { id: 29, name: 'Jennifer Davis', displayName: 'Jennifer Davis', type: 'employee' },
     { id: 30, name: 'Joseph Jimenez', displayName: 'Joseph Jimenez', type: 'employee' },
     { id: 31, name: 'Jessica Jensen', displayName: 'Jessica Jensen', type: 'employee' },
     { id: 32, name: 'Jonathan Jacobs', displayName: 'Jonathan Jacobs', type: 'employee' },
     { id: 33, name: 'Julia Johnston', displayName: 'Julia Johnston', type: 'employee' },
 
-    // M names
-    { id: 34, name: 'Michael Miller', displayName: 'Michael Miller', type: 'employee' },
-    { id: 35, name: 'Maria Martinez', displayName: 'Maria Martinez', type: 'employee' },
-    { id: 36, name: 'Matthew Morales', displayName: 'Matthew Morales', type: 'employee' },
-    { id: 37, name: 'Michelle Murphy', displayName: 'Michelle Murphy', type: 'employee' },
-    { id: 38, name: 'Mark Mitchell', displayName: 'Mark Mitchell', type: 'employee' },
-    { id: 39, name: 'Megan Moore', displayName: 'Megan Moore', type: 'employee' },
+    // M names (including our Max employees for demo)
+    { id: 34, name: 'Max Frothingham', displayName: 'Max Frothingham', type: 'employee' },
+    { id: 35, name: 'Max Jasso Jr.', displayName: 'Max Jasso Jr.', type: 'employee' },
+    { id: 36, name: 'Max Levchin', displayName: 'Max Levchin', type: 'employee' },
+    { id: 37, name: 'Max Wesel', displayName: 'Max Wesel', type: 'employee' },
+    { id: 38, name: 'Michael Roberts', displayName: 'Michael Roberts', type: 'employee' },
+    { id: 39, name: 'Maria Martinez', displayName: 'Maria Martinez', type: 'employee' },
 
-    // S names
-    { id: 40, name: 'Sarah Smith', displayName: 'Sarah Smith', type: 'employee' },
+    // S names (including our key employees for demo)
+    { id: 40, name: 'Sarah Johnson', displayName: 'Sarah Johnson', type: 'employee' },
     { id: 41, name: 'Steven Sanchez', displayName: 'Steven Sanchez', type: 'employee' },
     { id: 42, name: 'Stephanie Scott', displayName: 'Stephanie Scott', type: 'employee' },
     { id: 43, name: 'Samuel Sanders', displayName: 'Samuel Sanders', type: 'employee' },
