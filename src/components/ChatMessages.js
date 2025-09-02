@@ -293,9 +293,13 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         if (cleanWord.endsWith("'s")) {
           cleanWord = cleanWord.slice(0, -2);
         }
+        console.log(`DEBUG: Checking common name: "${word}" → "${cleanWord}" against:`, commonNames);
+        const isCommonName = commonNames.includes(cleanWord.toLowerCase());
+        const isNotStopWord = !stopWords.includes(cleanWord.toLowerCase());
+        console.log(`DEBUG: Is "${cleanWord}" a common name?`, isCommonName, 'Not stop word?', isNotStopWord);
         return cleanWord.length > 1 &&
-               commonNames.includes(cleanWord.toLowerCase()) &&
-               !stopWords.includes(cleanWord.toLowerCase());
+               isCommonName &&
+               isNotStopWord;
       });
 
       // Combine both lists and remove duplicates
@@ -307,21 +311,8 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       console.log('DEBUG: Additional names (common names):', additionalNames);
       console.log('DEBUG: All potential names (combined):', allPotentialNames);
 
-      // Check for typos in extracted names BEFORE matching
-      console.log('Checking for typos in extracted names:', allPotentialNames);
-      for (const name of allPotentialNames) {
-        let cleanName = name.replace(/[?!.,'"`]/g, '');
-        if (cleanName.endsWith("'s")) {
-          cleanName = cleanName.slice(0, -2);
-        }
-        
-        // Check if this name looks like a typo of an existing employee
-        const typoSuggestion = checkForTypoInName(cleanName);
-        if (typoSuggestion) {
-          console.log('Found typo suggestion for name:', cleanName, '→', typoSuggestion);
-          return typoSuggestion;
-        }
-      }
+      // Skip typo checking for now - let normal matching happen first
+      console.log('Skipping typo check - will do normal matching first:', allPotentialNames);
 
       // Also try partial matches and common name variations
       allPotentialNames.forEach(name => {
