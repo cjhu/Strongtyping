@@ -4,6 +4,7 @@ import ThinkingComponent from './ThinkingComponent';
 import DisambiguationDropdownNew from './DisambiguationDropdownNew';
 import EmployeeTooltip from './EmployeeTooltip';
 import ErrorBoundary from './ErrorBoundary';
+import InsuranceSelectionComponent from './InsuranceSelectionComponent';
 
 const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -63,6 +64,55 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     approvalRequired: 'Manager only'
   };
 
+  // Mock insurance data for current user
+  const INSURANCE_DATA = {
+    currentUser: 'Jared Hu',
+    options: [
+      {
+        id: 'medical',
+        type: 'Medical',
+        plan: 'Anthem Blue Cross HMO',
+        premium: '$245.50/month',
+        deductible: '$1,500',
+        coverage: 'Employee + Family',
+        network: 'HMO Network',
+        details: {
+          copay: '$25 Primary Care, $50 Specialist',
+          outOfPocket: '$6,000 family max',
+          prescription: '$10 Generic, $30 Brand'
+        }
+      },
+      {
+        id: 'dental',
+        type: 'Dental', 
+        plan: 'Delta Dental PPO',
+        premium: '$45.20/month',
+        deductible: '$50',
+        coverage: 'Employee + Family',
+        network: 'PPO Network',
+        details: {
+          preventive: '100% covered',
+          basic: '80% covered after deductible',
+          major: '50% covered after deductible'
+        }
+      },
+      {
+        id: 'vision',
+        type: 'Vision',
+        plan: 'VSP Vision Care',
+        premium: '$18.75/month',
+        deductible: '$0',
+        coverage: 'Employee + Family', 
+        network: 'VSP Network',
+        details: {
+          exam: '$10 copay annually',
+          frames: '$150 allowance every 2 years',
+          contacts: '$150 allowance annually'
+        }
+      }
+    ]
+  };
+
   // Debug function to help understand what queries are being processed
   const debugQuery = (userMessage) => {
     console.log('🔍 AI Query Debug:', {
@@ -101,12 +151,14 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       return false;
     }
 
-    // Look for employee/payroll/PTO related keywords
+    // Look for employee/payroll/PTO/insurance related keywords
     const queryKeywords = [
       'paycheck', 'salary', 'payroll', 'employee', 'person',
       'department', 'team', 'manager', 'latest', 'last',
       'total', 'budget', 'headcount', 'role', 'position',
-      'time off', 'pto', 'vacation', 'leave', 'days off'
+      'time off', 'pto', 'vacation', 'leave', 'days off',
+      'insurance', 'coverage', 'medical', 'dental', 'vision',
+      'health', 'benefits', 'plan', 'premium'
     ];
 
     const hasQueryKeyword = queryKeywords.some(keyword =>
@@ -256,6 +308,15 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     });
   };
 
+  // Generate insurance response with chip-based selection
+  const generateInsuranceResponse = () => {
+    return JSON.stringify({
+      type: 'insurance_selection',
+      data: INSURANCE_DATA,
+      message: 'Can you let me know which type of health insurance you are talking about?'
+    });
+  };
+
   // Generate AI response with ambiguity resolution
   const generateAIResponse = (userMessage) => {
     try {
@@ -269,6 +330,15 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
           lowerMessage.includes('i need to take')) {
         console.log('Detected PTO request');
         return generatePTOResponse();
+      }
+
+      // Check if it's an insurance coverage request
+      if (lowerMessage.includes('insurance') || lowerMessage.includes('coverage') ||
+          lowerMessage.includes('medical') || lowerMessage.includes('dental') ||
+          lowerMessage.includes('vision') || lowerMessage.includes('health') ||
+          lowerMessage.includes('benefits')) {
+        console.log('Detected insurance request');
+        return generateInsuranceResponse();
       }
 
       // Find potential matches first (before typo checking)
@@ -885,6 +955,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
           <p>• Use <strong>@</strong> to insert employees, departments, or other objects</p>
           <p>• Ask questions like "What's Max's latest paycheck?"</p>
           <p>• Say "I need to take some time off" to request PTO</p>
+          <p>• Ask "Can you show me my insurance coverage?" for benefits</p>
         </div>
       ) : (
         messages.map(message => {
@@ -963,6 +1034,14 @@ const AIReplyContent = ({ content, isAIQuery, onCandidateSelect, parseMessageCon
       return <DisambiguationDropdownNew 
         disambiguationData={parsedContent}
         onSelect={onCandidateSelect}
+      />;
+    }
+    
+    if (parsedContent.type === 'insurance_selection') {
+      return <InsuranceSelectionComponent 
+        insuranceData={parsedContent.data}
+        message={parsedContent.message}
+        onSelectInsurance={onSendMessage}
       />;
     }
   } catch (e) {
