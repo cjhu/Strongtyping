@@ -15,7 +15,75 @@ const ChatInput = ({ onSendMessage }) => {
 
   const inputRef = useRef(null);
   const disambiguationTimeoutRef = useRef(null);
+  const focusTimeoutRef = useRef(null);
 
+  // Function to ensure input is focused
+  const ensureFocus = useCallback(() => {
+    if (inputRef.current && document.activeElement !== inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // Focus on mount and maintain focus
+  useEffect(() => {
+    // Initial focus
+    ensureFocus();
+
+    // Focus restoration after any interaction
+    const handleFocusLoss = () => {
+      // Small delay to allow for component interactions
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+      focusTimeoutRef.current = setTimeout(() => {
+        ensureFocus();
+      }, 100);
+    };
+
+    // Listen for clicks anywhere in the document
+    const handleDocumentClick = (e) => {
+      // Don't steal focus if user is interacting with form elements
+      const isFormElement = e.target.tagName === 'INPUT' || 
+                           e.target.tagName === 'TEXTAREA' || 
+                           e.target.tagName === 'SELECT' ||
+                           e.target.tagName === 'BUTTON' ||
+                           e.target.closest('button') ||
+                           e.target.closest('input') ||
+                           e.target.closest('select');
+      
+      if (!isFormElement) {
+        setTimeout(ensureFocus, 50);
+      }
+    };
+
+    // Listen for blur events on the input
+    const handleBlur = () => {
+      handleFocusLoss();
+    };
+
+    // Add event listeners
+    document.addEventListener('click', handleDocumentClick);
+    if (inputRef.current) {
+      inputRef.current.addEventListener('blur', handleBlur);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+      if (inputRef.current) {
+        inputRef.current.removeEventListener('blur', handleBlur);
+      }
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+    };
+  }, [ensureFocus]);
+
+  // Also restore focus after state changes that might affect focus
+  useEffect(() => {
+    if (!showDropdown && !showDisambiguation) {
+      setTimeout(ensureFocus, 50);
+    }
+  }, [showDropdown, showDisambiguation, ensureFocus]);
 
 
   const handleInputChange = (e) => {
@@ -304,11 +372,16 @@ const ChatInput = ({ onSendMessage }) => {
         setShowDropdown(false);
         setShowDisambiguation(false);
         setDetectedText('');
+        
+        // Restore focus after message submission
+        setTimeout(ensureFocus, 100);
       }
     } else if (e.key === 'Escape') {
       setShowDropdown(false);
       setShowDisambiguation(false);
       setDetectedText('');
+      // Restore focus after closing dropdowns
+      setTimeout(ensureFocus, 50);
     }
   };
 
@@ -327,9 +400,9 @@ const ChatInput = ({ onSendMessage }) => {
       setShowDropdown(false);
 
       // Focus back to input
-      setTimeout(() => inputRef.current?.focus(), 0);
+      setTimeout(ensureFocus, 0);
     }
-  }, [message]);
+  }, [message, ensureFocus]);
 
   const handleCategorySelect = useCallback((category) => {
     // Handle category drill-down
