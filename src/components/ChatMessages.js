@@ -244,6 +244,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       // Also try partial matches and common name variations
       allPotentialNames.forEach(name => {
         const cleanName = name.replace(/[?!.,'"`]/g, '');
+        console.log('Searching for name:', cleanName);
         EMPLOYEE_DATABASE.employees.forEach(employee => {
           const employeeName = employee.name.toLowerCase();
           const searchName = cleanName.toLowerCase();
@@ -254,6 +255,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
               searchName.includes(employeeName.split(' ')[1]) ||
               employeeName.split(' ')[0].includes(searchName) ||
               employeeName.split(' ')[1]?.includes(searchName)) {
+            console.log('Found candidate:', employee.name);
             candidates.push({
               type: 'employee',
               data: employee,
@@ -284,9 +286,15 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       }
     }
 
+    // Remove duplicate candidates
+    const uniqueCandidates = candidates.filter((candidate, index) => {
+      return candidates.findIndex(c => c.data.id === candidate.data.id) === index;
+    });
+    console.log('Found', candidates.length, 'total candidates,', uniqueCandidates.length, 'unique candidates');
+    console.log('Candidates:', uniqueCandidates.map(c => c.data.name));
+
     // Handle different response scenarios
-    console.log('Found', candidates.length, 'candidates');
-    if (candidates.length === 0) {
+    if (uniqueCandidates.length === 0) {
       console.log('No candidates found, returning fallback message');
       // Provide helpful suggestions based on query type
       if (lowerMessage.includes('department') || lowerMessage.includes('team')) {
@@ -296,14 +304,14 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       } else {
         return "I couldn't find any matching information. Try asking about:\n\n• Specific employees (e.g., 'What's Max's latest paycheck?')\n• Departments (e.g., 'Who manages Engineering?')\n• Payroll information (e.g., 'What's the salary for John Johnson?')\n\nI have data for 10 employees across 5 departments!";
       }
-    } else if (candidates.length === 1) {
-      console.log('Single candidate found, generating detailed response for:', candidates[0].data?.name);
+    } else if (uniqueCandidates.length === 1) {
+      console.log('Single candidate found, generating detailed response for:', uniqueCandidates[0].data?.name);
       // Single match - provide direct response
-      return generateDetailedResponse(candidates[0]);
+      return generateDetailedResponse(uniqueCandidates[0]);
     } else {
       console.log('Multiple candidates found, generating ambiguity response');
       // Multiple matches - show selection options
-      const ambiguityResponse = generateAmbiguityResponse(candidates);
+      const ambiguityResponse = generateAmbiguityResponse(uniqueCandidates);
       setLastDisambiguationContent(ambiguityResponse);
       return ambiguityResponse;
     }
