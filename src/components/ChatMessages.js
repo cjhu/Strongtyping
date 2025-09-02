@@ -195,15 +195,7 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
         return generatePTOResponse();
       }
 
-      // Check for typos and fuzzy matching first
-      console.log('Checking for typos...');
-      const typoSuggestion = checkForTypos(userMessage);
-      if (typoSuggestion) {
-        console.log('Found typo suggestion:', typoSuggestion);
-        return typoSuggestion;
-      }
-
-      // Find potential matches
+      // Find potential matches first (before typo checking)
       console.log('Looking for employee matches...');
       const candidates = [];
 
@@ -223,9 +215,13 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       // Extract potential names (more flexible approach)
       const words = userMessage.split(/\s+/);
       const potentialNames = words.filter(word => {
-        const cleanWord = word.replace(/[?!.,'"`]/g, ''); // Remove punctuation
+        // Handle possessive forms - remove 's at the end
+        let cleanWord = word.replace(/[?!.,'"`]/g, ''); // Remove punctuation
+        if (cleanWord.endsWith("'s")) {
+          cleanWord = cleanWord.slice(0, -2); // Remove 's
+        }
         return cleanWord.length > 1 &&
-               !['what', 'who', 'how', 'when', 'where', 'the', 'is', 'are', 'do', 'does', 'tell', 'me', 'about', 'a', 'an'].includes(cleanWord.toLowerCase());
+               !['what', 'who', 'how', 'when', 'where', 'the', 'is', 'are', 'do', 'does', 'tell', 'me', 'about', 'a', 'an', 'show', 'latest'].includes(cleanWord.toLowerCase());
       });
 
       // Also try common names that might not be capitalized
@@ -243,7 +239,11 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 
       // Also try partial matches and common name variations
       allPotentialNames.forEach(name => {
-        const cleanName = name.replace(/[?!.,'"`]/g, '');
+        let cleanName = name.replace(/[?!.,'"`]/g, '');
+        // Handle possessive forms - remove 's at the end
+        if (cleanName.endsWith("'s")) {
+          cleanName = cleanName.slice(0, -2);
+        }
         console.log('Searching for name:', cleanName);
         EMPLOYEE_DATABASE.employees.forEach(employee => {
           const employeeName = employee.name.toLowerCase();
@@ -295,7 +295,15 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
 
     // Handle different response scenarios
     if (uniqueCandidates.length === 0) {
-      console.log('No candidates found, returning fallback message');
+      console.log('No candidates found, checking for typos...');
+      // Check for typos and fuzzy matching only if no direct matches found
+      const typoSuggestion = checkForTypos(userMessage);
+      if (typoSuggestion) {
+        console.log('Found typo suggestion:', typoSuggestion);
+        return typoSuggestion;
+      }
+      
+      console.log('No typos found, returning fallback message');
       // Provide helpful suggestions based on query type
       if (lowerMessage.includes('department') || lowerMessage.includes('team')) {
         return "I can help you with information about departments. Try asking about:\n\n• Engineering department\n• Marketing team\n• Sales department\n• HR department\n• Finance department\n\nOr ask about specific employees!";
