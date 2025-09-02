@@ -1,6 +1,6 @@
 .pto-request-container {
   width: 100%;
-  max-width: 500px;
+  max-width: 320px;
   margin: 0;
 }
 
@@ -8,8 +8,8 @@
 .pto-balance-card {
   background: white;
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e9ecef;
 }
@@ -97,8 +97,8 @@
 .date-picker-section {
   background: white;
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e9ecef;
 }
