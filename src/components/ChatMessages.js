@@ -90,6 +90,34 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
     return hasQueryKeyword;
   };
 
+  // Check for typos in a single name
+  const checkForTypoInName = (nameToCheck) => {
+    try {
+      if (!nameToCheck || nameToCheck.length < 3) return null;
+      
+      // Check against employee names
+      for (const employee of EMPLOYEE_DATABASE.employees) {
+        if (!employee || !employee.name) continue;
+        
+        const fullName = employee.name.toLowerCase();
+        const firstName = employee.name.split(' ')[0]?.toLowerCase() || '';
+        const lastName = employee.name.split(' ')[1]?.toLowerCase() || '';
+        
+        // Check for similar names (simple fuzzy matching)
+        if (isSimilar(nameToCheck.toLowerCase(), firstName) || 
+            isSimilar(nameToCheck.toLowerCase(), lastName) || 
+            isSimilar(nameToCheck.toLowerCase(), fullName.replace(/\s+/g, ''))) {
+          return `I couldn't find any ${nameToCheck} in the system. There are many employees with the first name "Max." Are you referring to {{${employee.name}:employee}}?`;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error in checkForTypoInName:', error);
+      return null;
+    }
+  };
+
   // Check for typos and suggest corrections
   const checkForTypos = (userMessage) => {
     try {
@@ -237,6 +265,22 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       // Combine both lists
       const allPotentialNames = [...potentialNames, ...additionalNames];
 
+      // Check for typos in extracted names BEFORE matching
+      console.log('Checking for typos in extracted names:', allPotentialNames);
+      for (const name of allPotentialNames) {
+        let cleanName = name.replace(/[?!.,'"`]/g, '');
+        if (cleanName.endsWith("'s")) {
+          cleanName = cleanName.slice(0, -2);
+        }
+        
+        // Check if this name looks like a typo of an existing employee
+        const typoSuggestion = checkForTypoInName(cleanName);
+        if (typoSuggestion) {
+          console.log('Found typo suggestion for name:', cleanName, '→', typoSuggestion);
+          return typoSuggestion;
+        }
+      }
+
       // Also try partial matches and common name variations
       allPotentialNames.forEach(name => {
         let cleanName = name.replace(/[?!.,'"`]/g, '');
@@ -301,16 +345,6 @@ const ChatMessages = ({ messages, onSendMessage, onUndo }) => {
       if (typoSuggestion) {
         console.log('Found typo suggestion:', typoSuggestion);
         return typoSuggestion;
-      }
-      
-      console.log('No typos found, returning fallback message');
-      // Provide helpful suggestions based on query type
-      if (lowerMessage.includes('department') || lowerMessage.includes('team')) {
-        return "I can help you with information about departments. Try asking about:\n\n• Engineering department\n• Marketing team\n• Sales department\n• HR department\n• Finance department\n\nOr ask about specific employees!";
-      } else if (lowerMessage.includes('manager') || lowerMessage.includes('who')) {
-        return "I can help you find information about managers. Try asking:\n\n• Who manages Engineering?\n• Who is the manager of Marketing?\n• Tell me about Sarah Johnson (Engineering Manager)\n\nI have information about all department managers!";
-      } else {
-        return "I couldn't find any matching information. Try asking about:\n\n• Specific employees (e.g., 'What's Max's latest paycheck?')\n• Departments (e.g., 'Who manages Engineering?')\n• Payroll information (e.g., 'What's the salary for John Johnson?')\n\nI have data for 10 employees across 5 departments!";
       }
     } else if (uniqueCandidates.length === 1) {
       console.log('Single candidate found, generating detailed response for:', uniqueCandidates[0].data?.name);
